@@ -82,7 +82,7 @@ export default function AIChatbot({ transactions, currency = 'VND' }) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="glass-card"
+            className="friendly-card"
             style={{ position: 'fixed', bottom: '32px', right: '32px', width: '380px', height: '600px', display: 'flex', flexDirection: 'column', zIndex: 100, overflow: 'hidden' }}
           >
             {/* Header AI Chat */}

@@ -1,56 +1,52 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Khung Màu Light Mode */
-  --bg-app: #f1f5f9;
-  --surface-glass: rgba(255, 255, 255, 0.75);
-  --surface-opaque: #ffffff;
-  --border-glass: rgba(0, 0, 0, 0.05);
+  /* Tông màu Thân thiện, Sáng sủa, Hiện đại kiểu App Tài chính (MoMo, ZaloPay, Timo) */
+  --bg-app: #f8fafc; /* Nền xám xanh cực nhạt */
+  --surface-opaque: #ffffff; /* Nền thẻ trắng tinh khiết */
   
-  --text-primary: #0f172a;
-  --text-secondary: #64748b;
+  --primary: #0d9488; /* Xanh ngọc / Teal - Tạo sự tin cây, mát mẻ */
+  --primary-hover: #0f766e;
+  --primary-bg: #ccfbf1; /* Xanh ngọc siêu nhạt cho viền/nền hover */
+  
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
   --text-muted: #94a3b8;
 
-  --primary: #3b82f6; /* Xanh dương */
-  --primary-hover: #2563eb;
-  --accent: #8b5cf6; /* Tím */
-  
-  --success: #10b981; /* Xanh lá */
-  --success-bg: rgba(16, 185, 129, 0.1);
-  --danger: #ef4444; /* Đỏ */
-  --danger-bg: rgba(239, 68, 68, 0.1);
-  --warning: #f59e0b; /* Vàng */
-  --warning-bg: rgba(245, 158, 11, 0.1);
+  --success: #10b981;
+  --success-bg: #d1fae5;
+  --danger: #ef4444;
+  --danger-bg: #fee2e2;
+  --warning: #f59e0b;
+  --warning-bg: #fef3c7;
 
-  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
-  --radius: 20px;
+  /* Bóng đổ xịn xò của Apple / Stripe: mềm mại, tản rộng */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 10px 25px -5px rgba(0,0,0,0.03), 0 8px 10px -6px rgba(0,0,0,0.01);
+  --shadow-hover: 0 20px 25px -5px rgba(13, 148, 136, 0.08), 0 8px 10px -6px rgba(13, 148, 136, 0.04);
+  
+  --border-light: #e2e8f0;
+  --radius-card: 24px;   /* Bo góc cực bự tựa Mobile App */
+  --radius-btn: 14px;
+  --radius-input: 16px;
 }
 
 [data-theme='dark'] {
-  /* Khung Màu Dark Mode - Chuẩn Fintech Navy */
-  --bg-app: #0f172a; /* Dark Navy chuẩn */
-  --surface-glass: rgba(30, 41, 59, 0.7); /* Slate 800 trong suốt */
+  --bg-app: #0f172a;
   --surface-opaque: #1e293b;
-  --border-glass: rgba(255, 255, 255, 0.08);
-
+  --primary: #2dd4bf;
+  --primary-hover: #14b8a6;
+  --primary-bg: rgba(45, 212, 191, 0.15);
+  
   --text-primary: #f8fafc;
   --text-secondary: #cbd5e1;
   --text-muted: #64748b;
 
-  --primary: #60a5fa; /* Xanh dương sáng */
-  --primary-hover: #3b82f6;
-  --accent: #a78bfa;
-
-  --success: #34d399;
-  --success-bg: rgba(16, 185, 129, 0.15);
-  --danger: #f87171;
-  --danger-bg: rgba(239, 68, 68, 0.15);
-  --warning: #fbbf24;
-  --warning-bg: rgba(245, 158, 11, 0.15);
-
-  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+  --border-light: #334155;
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.2);
+  --shadow-md: 0 4px 8px rgba(0,0,0,0.3);
+  --shadow-lg: 0 12px 24px rgba(0,0,0,0.4);
 }
 
 * {
@@ -58,67 +54,72 @@
   margin: 0;
   padding: 0;
   font-family: 'Inter', sans-serif;
+  transition: background-color 0.2s, color 0.1s;
 }
 
 body {
   background-color: var(--bg-app);
   color: var(--text-primary);
-  transition: background-color 0.4s ease, color 0.4s ease;
   overflow-x: hidden;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Các Class Giao Diện Cao Cấp */
-.glass-card {
-  background: var(--surface-glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius);
+/* KHÔNG DÙNG KÍNH MỜ NỮA -> Dùng Thẻ Trắng Tinh Khiết */
+.friendly-card {
+  background: var(--surface-opaque);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-card);
   box-shadow: var(--shadow-sm);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease;
 }
 
-.glass-card:hover {
+.friendly-card:hover {
   transform: translateY(-4px);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-hover);
 }
 
-/* Biến Thể Card Trong Suốt Hơn */
-.glass-card-transparent {
-  background: rgba(255,255,255, 0.02);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--border-glass);
-  border-radius: var(--radius);
-}
-
-/* Nút Bấm Đẳng Cấp */
+/* Nút Bấm Xinh Xắn */
 .btn-primary {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  background: var(--primary);
   color: white;
   border: none;
   font-weight: 600;
-  border-radius: 12px;
-  padding: 12px 24px;
+  border-radius: var(--radius-btn);
+  padding: 14px 24px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  box-shadow: 0 4px 6px -1px rgba(13, 148, 136, 0.2);
 }
 
 .btn-primary:hover {
-  filter: brightness(1.1);
-  transform: scale(1.02);
-  box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.4);
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px -3px rgba(13, 148, 136, 0.3);
+}
+
+.btn-secondary {
+  background: var(--primary-bg);
+  color: var(--primary);
+  border: none;
+  font-weight: 600;
+  border-radius: var(--radius-btn);
+  padding: 14px 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-secondary:hover {
+  filter: brightness(0.95);
 }
 
 .btn-icon {
   background: transparent;
   color: var(--text-secondary);
-  border: 1px solid var(--border-glass);
+  border: 1px solid var(--border-light);
   border-radius: 12px;
   padding: 8px;
   cursor: pointer;
@@ -129,37 +130,35 @@ body {
 }
 
 .btn-icon:hover {
-  background: var(--surface-opaque);
+  background: var(--border-light);
   color: var(--text-primary);
 }
 
-/* Ô Nhập Tinh Tế (Input) */
-.input-glass {
+/* Ô Nhập Sạch Sẽ */
+.input-friendly {
   width: 100%;
-  background: var(--surface-opaque);
-  border: 1px solid var(--border-glass);
+  background: var(--bg-app);
+  border: 1px solid var(--border-light);
   color: var(--text-primary);
-  border-radius: 12px;
-  padding: 14px 16px;
+  border-radius: var(--radius-input);
+  padding: 16px 20px;
   font-size: 15px;
   outline: none;
   transition: all 0.2s ease;
 }
 
-.input-glass:focus {
+.input-friendly:focus {
+  background: var(--surface-opaque);
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 0 4px var(--primary-bg);
 }
 
-/* Tiêu Đề */
 h1, h2, h3, h4, h5 {
-  font-family: 'Poppins', sans-serif;
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: -0.02em;
 }
 
-/* Bảng Dữ Liệu */
 table {
   width: 100%;
   border-collapse: collapse;
@@ -172,22 +171,21 @@ th {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-secondary);
-  border-bottom: 1px solid var(--border-glass);
+  border-bottom: 1px solid var(--border-light);
 }
 
 td {
   padding: 16px;
   font-size: 15px;
   color: var(--text-primary);
-  border-bottom: 1px solid var(--border-glass);
+  border-bottom: 1px solid var(--border-light);
   vertical-align: middle;
 }
 
 tr:hover td {
-  background-color: rgba(255, 255, 255, 0.02);
+  background-color: var(--bg-app);
 }
 
-/* Các Nhãn Màu (Badge) */
 .badge {
   padding: 6px 12px;
   border-radius: 20px;
@@ -200,19 +198,19 @@ tr:hover td {
 .badge.success { background: var(--success-bg); color: var(--success); }
 .badge.danger { background: var(--danger-bg); color: var(--danger); }
 .badge.warning { background: var(--warning-bg); color: var(--warning); }
-.badge.primary { background: rgba(59, 130, 246, 0.1); color: var(--primary); }
+.badge.primary { background: var(--primary-bg); color: var(--primary); }
 
-/* Animation Đẹp Cho Giao Diện */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Animation Sương Sương */
+@keyframes popIn {
+  0% { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
-.animate-fade-in {
-  animation: fadeIn 0.5s ease forwards;
+.animate-pop-in {
+  animation: popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Layout Siêu Cấp - Sidebar + Main */
+/* Bố cục V3 */
 .app-container {
   display: flex;
   height: 100vh;
@@ -222,10 +220,8 @@ tr:hover td {
 .sidebar {
   width: 280px;
   height: 100vh;
-  background: var(--surface-glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-right: 1px solid var(--border-glass);
+  background: var(--surface-opaque);
+  border-right: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
   padding: 24px;
@@ -241,58 +237,30 @@ tr:hover td {
   height: 100vh;
   overflow-y: auto;
   position: relative;
-}
-
-/* Nền Tinh Tế (Gradient Blobs) ở Background Phía Sau */
-.bg-blobs {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  z-index: -1;
-  overflow: hidden;
   background: var(--bg-app);
 }
 
-.bg-blobs::before, .bg-blobs::after {
-  content: '';
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(100px);
-  opacity: 0.15;
-  animation: float 20s infinite ease-in-out alternate;
+/* Nền Đăng nhập thân thiện */
+.auth-bg {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, var(--primary-bg) 0%, var(--bg-app) 100%);
+  z-index: -1;
 }
 
-.bg-blobs::before {
-  width: 600px; height: 600px;
-  background: var(--primary);
-  top: -200px; right: -100px;
-}
-
-.bg-blobs::after {
-  width: 500px; height: 500px;
-  background: var(--accent);
-  bottom: -200px; left: -100px;
-  animation-delay: -5s;
-}
-
-@keyframes float {
-  0% { transform: translate(0, 0); }
-  100% { transform: translate(50px, 50px); }
-}
-
-/* Cắt cuộn trang ẩn nhưng vẫn vuốt được */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--border-glass);
+  background: #cbd5e1;
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
+  background: #94a3b8;
 }
 
 /* Responsive */
@@ -300,6 +268,7 @@ tr:hover td {
   .sidebar {
     position: fixed;
     transform: translateX(-100%);
+    box-shadow: var(--shadow-lg);
   }
   .sidebar.open {
     transform: translateX(0);

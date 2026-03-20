@@ -89,7 +89,7 @@ export default function TransactionForm({ onClose, onAdd }) {
         initial={{ y: 50, opacity: 0, scale: 0.95 }}
         animate={{ y: 0, opacity: 1, scale: 1 }}
         exit={{ y: 20, opacity: 0, scale: 0.95 }}
-        className="glass-card" 
+        className="friendly-card" 
         style={{ width: '100%', maxWidth: '500px', padding: '32px', position: 'relative' }}
       >
         <button onClick={onClose} className="btn-icon" style={{ position: 'absolute', top: '16px', right: '16px', border: 'none' }}>

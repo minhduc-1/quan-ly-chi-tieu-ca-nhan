@@ -6,7 +6,7 @@ export default function GoalTracker({ goals, currency }) {
   if (!goals || goals.length === 0) return null;
 
   return (
-    <div className="glass-card" style={{ padding: '24px' }}>
+    <div className="friendly-card" style={{ padding: '24px' }}>
       <h3 style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
         <Target size={20} color="var(--primary)" /> Săn Mục Tiêu (Goals)
       </h3>

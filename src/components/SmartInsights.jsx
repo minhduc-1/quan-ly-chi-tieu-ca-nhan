@@ -71,7 +71,7 @@ export default function SmartInsights({ transactions, currency }) {
       <motion.div 
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="glass-card" style={{ padding: '24px' }}>
+        className="friendly-card" style={{ padding: '24px' }}>
         
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
@@ -128,7 +128,7 @@ export default function SmartInsights({ transactions, currency }) {
         ]} currency={currency} />
         
         {/* Bản đồ Heatmap (Giả lập đồ họa xịn) */}
-        <div className="glass-card" style={{ padding: '24px', marginTop: '24px' }}>
+        <div className="friendly-card" style={{ padding: '24px', marginTop: '24px' }}>
            <h3 style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
              <Zap size={20} color="var(--danger)" /> Radar HeatMap Vị Trí Vung Tiền
            </h3>

@@ -33,7 +33,7 @@ export default function Dashboard({ transactions, goals, currency }) {
   const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
       return (
-        <div className="glass-card" style={{ padding: '12px 16px', border: '1px solid var(--border-glass)' }}>
+        <div className="friendly-card" style={{ padding: '12px 16px', border: '1px solid var(--border-glass)' }}>
           <p style={{ margin: 0, fontWeight: 600, color: 'var(--text-primary)' }}>{label}</p>
           {payload.map((p, i) => (
              <p key={i} style={{ margin: '4px 0 0 0', color: p.color, fontWeight: 500 }}>
@@ -76,7 +76,7 @@ export default function Dashboard({ transactions, goals, currency }) {
       
       {/* 3 Thẻ Chỉ Số Thông Minh */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-        <motion.div variants={itemVariants} className="glass-card" style={{ padding: '24px' }}>
+        <motion.div variants={itemVariants} className="friendly-card" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ background: 'var(--primary-bg)', padding: '12px', borderRadius: '16px', color: 'var(--primary)' }}>
@@ -91,7 +91,7 @@ export default function Dashboard({ transactions, goals, currency }) {
           </p>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="glass-card" style={{ padding: '24px' }}>
+        <motion.div variants={itemVariants} className="friendly-card" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ background: 'var(--success-bg)', padding: '12px', borderRadius: '16px', color: 'var(--success)' }}>
@@ -105,7 +105,7 @@ export default function Dashboard({ transactions, goals, currency }) {
           </p>
         </motion.div>
 
-        <motion.div variants={itemVariants} className="glass-card" style={{ padding: '24px' }}>
+        <motion.div variants={itemVariants} className="friendly-card" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ background: 'var(--danger-bg)', padding: '12px', borderRadius: '16px', color: 'var(--danger)' }}>
@@ -146,7 +146,7 @@ export default function Dashboard({ transactions, goals, currency }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
         {/* Biểu đồ Biến Động */}
-        <motion.div variants={itemVariants} className="glass-card" style={{ padding: '24px' }}>
+        <motion.div variants={itemVariants} className="friendly-card" style={{ padding: '24px' }}>
            <h3 style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
              <Zap size={20} color="var(--primary)"/> Biến động Dòng tiền 7 Ngày Xu Hướng
            </h3>
@@ -175,7 +175,7 @@ export default function Dashboard({ transactions, goals, currency }) {
         </motion.div>
 
         {/* Biểu đồ Tròn Thẩm Mỹ */}
-        <motion.div variants={itemVariants} className="glass-card" style={{ padding: '24px' }}>
+        <motion.div variants={itemVariants} className="friendly-card" style={{ padding: '24px' }}>
            <h3 style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
              <PieChart size={20} color="var(--accent)"/> Cấu Trúc Chi Tiêu
            </h3>

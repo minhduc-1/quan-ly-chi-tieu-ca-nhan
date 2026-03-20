@@ -51,7 +51,7 @@ export default function Settings({ user, onLogout, currency, setCurrency }) {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) minmax(300px, 1fr)', gap: '24px' }}>
       
       {/* Trung tâm Định dạng Tiền Tệ */}
-      <div className="glass-card" style={{ padding: '24px' }}>
+      <div className="friendly-card" style={{ padding: '24px' }}>
         <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
            <Coins size={20} color="var(--warning)" /> Định Dạng Tiền Tệ Tỷ Giá
         </h3>
@@ -74,7 +74,7 @@ export default function Settings({ user, onLogout, currency, setCurrency }) {
       </div>
 
       {/* Trung Tâm Dữ Liệu Lõi */}
-      <div className="glass-card" style={{ padding: '24px' }}>
+      <div className="friendly-card" style={{ padding: '24px' }}>
         <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
            <ShieldAlert size={20} color="var(--primary)" /> An Toàn Dữ Liệu Cục Bộ (AES Backup)
         </h3>
@@ -99,7 +99,7 @@ export default function Settings({ user, onLogout, currency, setCurrency }) {
         </div>
       </div>
       
-      <div className="glass-card" style={{ padding: '24px', gridColumn: '1 / -1', border: '1px solid var(--danger)', background: 'var(--danger-bg)' }}>
+      <div className="friendly-card" style={{ padding: '24px', gridColumn: '1 / -1', border: '1px solid var(--danger)', background: 'var(--danger-bg)' }}>
          <h3 style={{ color: 'var(--danger)', marginBottom: '16px' }}>Khu Vực Nguy Hiểm (Vùng Trắng)</h3>
          <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '20px' }}>Toàn bộ thiết lập, số lượng mục tiêu và lịch sử hoạt động sẽ bị xoá khỏi LocalStorage cục bộ nếu bạn Đăng xuất khỏi phân vùng này.</p>
          <button onClick={onLogout} className="btn-primary" style={{ background: 'var(--danger)', color: 'white' }}>
