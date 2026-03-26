@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Wallet, Target, PieChart, Receipt, Settings as SettingsIcon, LogOut, Moon, Sun, ShieldCheck, UserPlus, LogIn, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Wallet, Target, PieChart, Receipt, Settings as SettingsIcon, LogOut, Moon, Sun, ShieldCheck, UserPlus, LogIn, ChevronRight, MailCheck, Lock } from 'lucide-react';
 
 import Dashboard from './components/Dashboard';
 import TransactionForm from './components/TransactionForm';
@@ -25,7 +25,11 @@ export default function App() {
 
   // Auth State
   const [user, setUser] = useState(null); 
-  const [isRegistering, setIsRegistering] = useState(false);
+  const [authMode, setAuthMode] = useState('login'); // 'login' | 'register_step1' | 'register_step2_otp' | 'register_step3_pwd'
+  
+  // Registration Data
+  const [tempRegData, setTempRegData] = useState({ name: '', email: '', otp: '' });
+  const [generatedOTP, setGeneratedOTP] = useState('');
 
   // App State
   const [showTransactionForm, setShowTransactionForm] = useState(false);
@@ -34,7 +38,7 @@ export default function App() {
   const [currency, setCurrency] = useState('VND'); 
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
   
-  // Data State - Gán cho một User cụ thể, nhưng để đơn giản ta load toàn bộ và filter theo user
+  // Data State - Gán cho một User cụ thể
   const [allTransactions, setAllTransactions] = useState(() => loadData('tx_data', []));
   const [allGoals, setAllGoals] = useState(() => loadData('goals_data', []));
 
@@ -56,7 +60,7 @@ export default function App() {
         logAction(user.email, 'Bảo mật', 'Tự động khóa ứng dụng do bận');
         setUser(null);
         alert('Phiên đăng nhập đã hết hạn để bảo vệ dữ liệu của bạn!');
-      }, 10 * 60 * 1000); // 10p
+      }, 10 * 60 * 1000);
     }
   };
 
@@ -69,6 +73,7 @@ export default function App() {
     };
   }, [user]);
 
+  // Handle Login flow
   const handleLogin = (e) => {
     e.preventDefault();
     const email = e.target.email.value;
@@ -88,38 +93,63 @@ export default function App() {
     }
   };
 
-  const handleRegister = (e) => {
+  // Handle Registration Flow - Step 1: Info to OTP
+  const handleRegStep1 = (e) => {
     e.preventDefault();
     const name = e.target.name.value;
     const email = e.target.email.value;
+
+    if (usersDB.find(u => u.email === email)) return alert('Thật tiếc, Email này đã có người đăng ký rồi. Hãy dùng email khác nhé!');
+
+    // Tạo mã OTP 6 số giả lập
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    setGeneratedOTP(otp);
+    setTempRegData({ ...tempRegData, name, email });
+    setAuthMode('register_step2_otp');
+
+    // Hiệu ứng gửi mail ảo
+    setTimeout(() => {
+      alert(`[HỆ THỐNG MÔ PHỎNG ĐÃ GỬI MAIL] \nXin chào ${name}, \nMã OTP bảo mật của bạn là: ${otp} \n\nVui lòng không chia sẻ mã này cho ai.`);
+    }, 800);
+  };
+
+  // Handle Registration Flow - Step 2: Validate OTP
+  const handleRegStep2 = (e) => {
+    e.preventDefault();
+    const inputOTP = e.target.otp.value;
+    if (inputOTP === generatedOTP) {
+        setAuthMode('register_step3_pwd');
+    } else {
+        alert('Mã OTP không chính xác. Bạn hãy kiểm tra lại hòm thư nhé!');
+    }
+  };
+
+  // Handle Registration Flow - Step 3: Pwd & Create
+  const handleRegStep3 = (e) => {
+    e.preventDefault();
     const pwd = e.target.password.value;
     const rePwd = e.target.repassword.value;
 
     if (pwd !== rePwd) return alert('Ồ không, hai mật khẩu không khớp nhau mất rồi!');
-    if (usersDB.find(u => u.email === email)) return alert('Email này đã được đăng ký! Bạn đăng nhập nhé.');
-
-    const newUser = { email, password: pwd, name, role: 'user' };
+    
+    const newUser = { email: tempRegData.email, password: pwd, name: tempRegData.name, role: 'user' };
     setUsersDB([...usersDB, newUser]);
     
+    // Đăng nhập luôn sau khi tạo
     setUser({
       ...newUser,
-      avatar: `https://ui-avatars.com/api/?name=${name.replace(' ','+')}&background=0d9488&color=fff&size=128&rounded=true`
+      avatar: `https://ui-avatars.com/api/?name=${tempRegData.name.replace(' ','+')}&background=0d9488&color=fff&size=128&rounded=true`
     });
     
-    // Add starter pack transactions for new user to make app look nice
-    const defaultTx = [
-      { id: Date.now()+'a', owner: email, date: new Date().toLocaleDateString('vi-VN'), category: 'Lương/Thưởng', amount: 10000000, note: 'Lương rủng rỉnh' },
-      { id: Date.now()+'b', owner: email, date: new Date().toLocaleDateString('vi-VN'), category: 'Ăn uống', amount: -250000, note: 'Trà sữa bạn bè' }
-    ];
-    setAllTransactions([...allTransactions, ...defaultTx]);
-    
-    logAction(email, 'Tạo tài khoản', `Người dùng hệ thống mới: ${name}`);
-    alert(`Chào đón ${name} đến với SmartExpense!`);
+    // KHÔNG tạo giao dịch mồi -> Trả về 0đ theo yêu cầu! Vĩnh viễn lưu cache cho account này.
+    logAction(tempRegData.email, 'Tạo tài khoản', `Người dùng mới xác minh Mail thành công: ${tempRegData.name}`);
+    alert(`Xác minh thành công! Chào ${tempRegData.name}. Số dư hiện tại là 0đ, bạn có thể tự nạp tiền và bắt đầu sử dụng nhé!`);
   };
 
   const handleLogout = () => {
     if(user) logAction(user.email, 'Đăng xuất', 'Rời hệ thống');
     setUser(null);
+    setAuthMode('login');
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
   };
 
@@ -129,7 +159,7 @@ export default function App() {
       <div style={{ display: 'flex', height: '100vh', width: '100vw', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
         <div className="auth-bg"></div>
         
-        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} 
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.4 }} 
           className="friendly-card" style={{ width: '100%', maxWidth: '440px', padding: '40px', textAlign: 'center', zIndex: 10 }}>
           
           <div style={{ background: 'var(--primary-bg)', width: '72px', height: '72px', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px auto', color: 'var(--primary)' }}>
@@ -137,38 +167,79 @@ export default function App() {
           </div>
           
           <h2 style={{ marginBottom: '8px', fontSize: '1.8rem', color: 'var(--text-primary)' }}>Smart Expense</h2>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '32px', fontSize: '15px' }}>Quản lý tiền bạc vui vẻ, thông minh và an tâm hơn mỗi ngày cùng cậu.</p>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '32px', fontSize: '15px' }}>
+            {authMode === 'login' && 'Quản lý tiền bạc vui vẻ, thông minh và an tâm hơn mỗi ngày cùng cậu.'}
+            {authMode === 'register_step1' && 'Bắt đầu hành trình tự do tài chính.'}
+            {authMode === 'register_step2_otp' && 'Xác minh Email để bảo vệ dữ liệu cục bộ.'}
+            {authMode === 'register_step3_pwd' && 'Tạo lớp khoá két sắt cuối cùng của cậu.'}
+          </p>
           
           <AnimatePresence mode="wait">
-            {!isRegistering ? (
+            
+            {/* MÀN LOGIN */}
+            {authMode === 'login' && (
               <motion.form key="login" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <input name="email" type="email" required placeholder="Email của bạn" className="input-friendly" />
-                <input name="password" type="password" required placeholder="Mật khẩu bí mật" className="input-friendly" />
+                <input name="email" type="email" required placeholder="Email của bạn" className="input-friendly" defaultValue="minhduc@gmail.com" />
+                <input name="password" type="password" required placeholder="Mật khẩu bí mật" className="input-friendly" defaultValue="123" />
                 
                 <button type="submit" className="btn-primary" style={{ marginTop: '8px', width: '100%', fontSize: '16px' }}>
                   Đăng Nhập <ChevronRight size={18} />
                 </button>
-                
                 <p style={{ marginTop: '16px', fontSize: '14px', color: 'var(--text-secondary)' }}>
-                  Cậu chưa có tài khoản? <span onClick={() => setIsRegistering(true)} style={{ color: 'var(--primary)', fontWeight: 'bold', cursor: 'pointer' }}>Mở ví mới cực nhanh!</span>
-                </p>
-              </motion.form>
-            ) : (
-              <motion.form key="register" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <input name="name" type="text" required placeholder="Họ Tên (VD: Thanh Trúc)" className="input-friendly" />
-                <input name="email" type="email" required placeholder="Email đăng ký" className="input-friendly" />
-                <input name="password" type="password" required placeholder="Tạo mật khẩu" className="input-friendly" />
-                <input name="repassword" type="password" required placeholder="Nhập lại mật khẩu" className="input-friendly" />
-                
-                <button type="submit" className="btn-primary" style={{ width: '100%', fontSize: '16px' }}>
-                  <UserPlus size={18} /> Tạo Tài Khoản Ngay
-                </button>
-                
-                <p style={{ marginTop: '16px', fontSize: '14px', color: 'var(--text-secondary)' }}>
-                  Đã là thành viên? <span onClick={() => setIsRegistering(false)} style={{ color: 'var(--primary)', fontWeight: 'bold', cursor: 'pointer' }}>Đăng nhập thôi!</span>
+                  Cậu chưa có tài khoản? <span onClick={() => setAuthMode('register_step1')} style={{ color: 'var(--primary)', fontWeight: 'bold', cursor: 'pointer' }}>Mở ví mới cực nhanh!</span>
                 </p>
               </motion.form>
             )}
+
+            {/* MÀN ĐĂNG KÝ 1: INFO */}
+            {authMode === 'register_step1' && (
+              <motion.form key="reg1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onSubmit={handleRegStep1} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <input name="name" type="text" required placeholder="Họ Tên (VD: Thanh Trúc)" className="input-friendly" />
+                <input name="email" type="email" required placeholder="Gõ Email thật để nhận mã OTP" className="input-friendly" />
+                
+                <button type="submit" className="btn-primary" style={{ width: '100%', fontSize: '16px' }}>
+                  <MailCheck size={18} /> Gửi Mã Xác Minh
+                </button>
+                <p style={{ marginTop: '16px', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                  Đã là thành viên? <span onClick={() => setAuthMode('login')} style={{ color: 'var(--primary)', fontWeight: 'bold', cursor: 'pointer' }}>Đăng nhập thôi!</span>
+                </p>
+              </motion.form>
+            )}
+
+            {/* MÀN ĐĂNG KÝ 2: OTP */}
+            {authMode === 'register_step2_otp' && (
+              <motion.form key="reg2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onSubmit={handleRegStep2} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ padding: '12px', background: 'var(--warning-bg)', color: 'var(--warning)', borderRadius: '12px', fontSize: '14px', marginBottom: '8px' }}>
+                   Hệ thống đã gửi hộp thư OTP đến email <b>{tempRegData.email}</b>. Vui lòng kiểm tra!
+                </div>
+                <input name="otp" type="text" required placeholder="Nhập 6 Số Mã OTP" maxLength={6} className="input-friendly" style={{ letterSpacing: '8px', fontSize: '20px', textAlign: 'center', fontWeight: 'bold' }} />
+                
+                <button type="submit" className="btn-primary" style={{ width: '100%', fontSize: '16px' }}>
+                  Xác Thực OTP
+                </button>
+                <p style={{ marginTop: '16px', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                  <span onClick={() => handleRegStep1({preventDefault: ()=>{}, target:{name:{value: tempRegData.name}, email:{value: tempRegData.email}}})} style={{ color: 'var(--primary)', fontWeight: 'bold', cursor: 'pointer' }}>Gửi lại mã?</span>
+                  {' '} | {' '}
+                  <span onClick={() => setAuthMode('register_step1')} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Đổi Email</span>
+                </p>
+              </motion.form>
+            )}
+
+            {/* MÀN ĐĂNG KÝ 3: PASSWORD */}
+            {authMode === 'register_step3_pwd' && (
+              <motion.form key="reg3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onSubmit={handleRegStep3} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ padding: '12px', background: 'var(--success-bg)', color: 'var(--success)', borderRadius: '12px', fontSize: '14px', marginBottom: '8px', fontWeight: 'bold' }}>
+                   Xác thực danh tính công dân thành công. Tính năng Số dư 0đ độc quyền đã kích hoạt. Dữ liệu của bạn được tách rời hoàn toàn!
+                </div>
+                <input name="password" type="password" required placeholder="Tạo mật khẩu cho két sắt" className="input-friendly" />
+                <input name="repassword" type="password" required placeholder="Nhập lại mật khẩu" className="input-friendly" />
+                
+                <button type="submit" className="btn-primary" style={{ width: '100%', fontSize: '16px' }}>
+                  <Lock size={18} /> Hoàn Tất & Khởi Tạo Két
+                </button>
+              </motion.form>
+            )}
+
           </AnimatePresence>
         </motion.div>
       </div>
@@ -241,7 +312,7 @@ export default function App() {
           <img src={user.avatar} alt="Avatar" style={{ width: '40px', height: '40px', borderRadius: '12px' }} />
           <div style={{ flex: 1, overflow: 'hidden' }}>
             <div style={{ fontWeight: '700', fontSize: '14px', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{user.name}</div>
-            <div style={{ color: 'var(--primary)', fontSize: '12px', fontWeight: '600' }}>Tài khoản Cơ bản</div>
+            <div style={{ color: 'var(--primary)', fontSize: '12px', fontWeight: '600' }}>Ví bảo mật độc quyền</div>
           </div>
           <button onClick={handleLogout} className="btn-icon" style={{ borderColor: 'var(--danger-bg)', color: 'var(--danger)', background: 'var(--danger-bg)' }} title="Đăng xuất">
             <LogOut size={16} strokeWidth={3} />
