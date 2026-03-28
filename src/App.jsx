@@ -43,6 +43,11 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [currency, setCurrency] = useState('VND'); 
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+  const [monthlyBudget, setMonthlyBudget] = useState(() => Number(localStorage.getItem('budget_' + (user?.email || ''))) || 20000000);
+
+  useEffect(() => {
+    if (user) localStorage.setItem('budget_' + user.email, monthlyBudget);
+  }, [monthlyBudget, user]);
   
   // Data State - Gán cho một User cụ thể
   const [allTransactions, setAllTransactions] = useState(() => loadData('tx_data', []));
@@ -359,17 +364,22 @@ export default function App() {
   const handleAddTx = (tx) => {
     setAllTransactions([{ ...tx, owner: user.email }, ...allTransactions]);
   };
+  const handleDeleteTx = (id) => {
+    if (window.confirm("Bạn có chắc muốn xóa giao dịch này không?")) {
+      setAllTransactions(allTransactions.filter(t => t.id !== id));
+    }
+  };
   const handleAddGoal = (g) => {
     setAllGoals([...allGoals, { ...g, owner: user.email }]);
   };
 
   const renderContent = () => {
     switch(activeTab) {
-      case 'dashboard': return <Dashboard transactions={myTransactions} goals={myGoals} currency={currency} />;
-      case 'reports': return <Reports transactions={myTransactions} currency={currency} />;
+      case 'dashboard': return <Dashboard transactions={myTransactions} goals={myGoals} currency={currency} onDeleteTx={handleDeleteTx} monthlyBudget={monthlyBudget} user={user} />;
+      case 'reports': return <Reports transactions={myTransactions} currency={currency} onDeleteTx={handleDeleteTx} />;
       case 'debts': return <DebtManager currency={currency} debts={myDebts} allDebts={allDebts} setAllDebts={setAllDebts} user={user} />;
-      case 'settings': return <Settings user={user} onLogout={handleLogout} currency={currency} setCurrency={setCurrency} updateUserProfile={updateUserProfile} />;
-      default: return <Dashboard transactions={myTransactions} goals={myGoals} currency={currency} />;
+      case 'settings': return <Settings user={user} onLogout={handleLogout} currency={currency} setCurrency={setCurrency} updateUserProfile={updateUserProfile} monthlyBudget={monthlyBudget} setMonthlyBudget={setMonthlyBudget} />;
+      default: return <Dashboard transactions={myTransactions} goals={myGoals} currency={currency} onDeleteTx={handleDeleteTx} monthlyBudget={monthlyBudget} user={user} />;
     }
   };
 

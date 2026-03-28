@@ -47,15 +47,30 @@ export default function SmartInsights({ transactions, goals, currency }) {
        recommendations.push(`Rất tuyệt! Bạn đã duy trì được chuỗi ${noSpendStreak} ngày không phát sinh chi phí.`);
     }
 
-    // Phân nhỏ danh mục
-    const categories = dayTx.reduce((acc, t) => {
-      acc[t.category] = (acc[t.category] || 0) + Math.abs(t.amount);
-      return acc;
-    }, {});
-    
-    if (categories['Ăn uống'] > 500000) {
-        recommendations.push("Chi phí ăn uống đang vượt mức khuyến nghị. Bạn có thể xem xét tự chuẩn bị bữa ăn để tối ưu dòng tiền.");
-    }
+    // Dynamic Month-over-Month logic
+    const currentDate = new Date();
+    const currentMonthTx = transactions.filter(t => t.amount < 0 && new Date(t.date).getMonth() === currentDate.getMonth());
+    const prevMonthTx = transactions.filter(t => { 
+        const d = new Date(t.date); 
+        const pDate = new Date(); pDate.setMonth(pDate.getMonth() - 1);
+        return t.amount < 0 && d.getMonth() === pDate.getMonth(); 
+    });
+
+    const currCategories = currentMonthTx.reduce((acc, t) => { acc[t.category] = (acc[t.category] || 0) + Math.abs(t.amount); return acc; }, {});
+    const prevCategories = prevMonthTx.reduce((acc, t) => { acc[t.category] = (acc[t.category] || 0) + Math.abs(t.amount); return acc; }, {});
+
+    Object.keys(currCategories).forEach(cat => {
+        const currCatVal = currCategories[cat];
+        const prevCatVal = prevCategories[cat] || 0;
+        if (prevCatVal > 0) {
+            const increase = ((currCatVal - prevCatVal) / prevCatVal) * 100;
+            if (increase > 20 && currCatVal > 200000) {
+                recommendations.push(`Bạn đang chi quá nhiều cho [${cat}] so với tháng trước (tăng ${increase.toFixed(0)}%). Hãy cẩn trọng!`);
+            }
+        } else if (currCatVal > 500000) {
+             recommendations.push(`Khoản chi mới cho [ ${cat} ] đang khá cao. Bạn nên theo dõi ngân sách sát sao.`);
+        }
+    });
     
     if (recommendations.length === 0) recommendations.push("Tiếp tục duy trì phong độ giữ tiền đỉnh cao này!");
 

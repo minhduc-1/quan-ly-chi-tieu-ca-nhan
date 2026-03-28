@@ -4,6 +4,7 @@ import { PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, Tooltip as Recharts
 import { formatCurrency } from '../utils/format';
 import { TrendingUp, TrendingDown, Target, Wallet, AlertOctagon, Zap } from 'lucide-react';
 import SmartInsights from './SmartInsights';
+import BillReminder from './BillReminder';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#64748b'];
 
@@ -17,7 +18,7 @@ const itemVariants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
 };
 
-export default function Dashboard({ transactions, goals, currency }) {
+export default function Dashboard({ transactions, goals, currency, onDeleteTx, monthlyBudget, user }) {
   const expenseTransactions = transactions.filter(t => t.amount < 0);
   const incomeTransactions = transactions.filter(t => t.amount > 0);
   
@@ -25,9 +26,24 @@ export default function Dashboard({ transactions, goals, currency }) {
   const totalIncome = incomeTransactions.reduce((sum, t) => sum + t.amount, 0);
   const balance = totalIncome - totalExpense;
 
-  // Tính toán Budget (Góp phần tăng UX cho UI)
-  const monthlyBudget = 20000000; // Hardcode ví dụ
+  // Tính toán Budget
   const budgetUsedPercent = (totalExpense / monthlyBudget) * 100;
+
+  // Tính toán Month over Month (So sánh tháng)
+  const currentDate = new Date();
+  const currentMonthTx = expenseTransactions.filter(t => { const d = new Date(t.date); return d.getMonth() === currentDate.getMonth() && d.getFullYear() === currentDate.getFullYear(); });
+  const prevMonthTx = expenseTransactions.filter(t => { 
+     const d = new Date(t.date); 
+     const pDate = new Date(); 
+     pDate.setMonth(pDate.getMonth() - 1);
+     return d.getMonth() === pDate.getMonth() && d.getFullYear() === pDate.getFullYear(); 
+  });
+  const currentMonthExpense = currentMonthTx.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+  const prevMonthExpense = prevMonthTx.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+  
+  let momPercent = 0;
+  if (prevMonthExpense > 0) momPercent = ((currentMonthExpense - prevMonthExpense) / prevMonthExpense) * 100;
+  else if (currentMonthExpense > 0) momPercent = 100;
   
   // Custom tooltips for Recharts
   const CustomTooltip = ({ active, payload, label }) => {
@@ -113,6 +129,11 @@ export default function Dashboard({ transactions, goals, currency }) {
               </div>
               <h3 style={{ fontSize: '15px', color: 'var(--text-secondary)' }}>Tổng Chi Tiêu</h3>
             </div>
+            {momPercent !== 0 && (
+               <span className="badge" style={{ background: momPercent > 0 ? 'var(--danger-bg)' : 'var(--success-bg)', color: momPercent > 0 ? 'var(--danger)' : 'var(--success)' }}>
+                 {momPercent > 0 ? '▲' : '▼'} {Math.abs(momPercent).toFixed(1)}% so với tháng trước
+               </span>
+            )}
           </div>
           <p style={{ fontSize: '2rem', fontWeight: '600', color: 'var(--danger)', letterSpacing: '-0.02em' }}>
             -{formatCurrency(totalExpense, currency)}
@@ -121,7 +142,13 @@ export default function Dashboard({ transactions, goals, currency }) {
           {/* Progress Bar Ngân Sách Xịn */}
           <div style={{ marginTop: '16px' }}>
              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '8px' }}>
-               <span>Đã sử dụng {budgetUsedPercent.toFixed(2)}% ngân sách tháng</span>
+               <span>
+                  {budgetUsedPercent >= 80 ? (
+                     <strong style={{ color: 'var(--danger)' }}>⚠️ Bạn đã tiêu {budgetUsedPercent.toFixed(1)}% ngân sách!</strong>
+                  ) : (
+                     <React.Fragment>Đã sử dụng {budgetUsedPercent.toFixed(1)}% ngân sách tháng</React.Fragment>
+                  )}
+               </span>
                <span>{formatCurrency(monthlyBudget, currency)}</span>
              </div>
              <div style={{ height: '8px', background: 'var(--border-glass)', borderRadius: '10px', overflow: 'hidden' }}>
@@ -131,7 +158,7 @@ export default function Dashboard({ transactions, goals, currency }) {
                  transition={{ duration: 1, ease: 'easeOut', delay: 0.5 }}
                  style={{ 
                    height: '100%', 
-                   background: budgetUsedPercent > 90 ? 'var(--danger)' : budgetUsedPercent > 75 ? 'var(--warning)' : 'var(--success)',
+                   background: budgetUsedPercent >= 90 ? 'var(--danger)' : budgetUsedPercent >= 75 ? 'var(--warning)' : 'var(--success)',
                    borderRadius: '10px'
                  }}
                ></motion.div>
@@ -141,6 +168,10 @@ export default function Dashboard({ transactions, goals, currency }) {
       </div>
 
       <motion.div variants={itemVariants}>
+        <BillReminder user={user} />
+      </motion.div>
+
+      <motion.div variants={itemVariants} style={{ marginTop: '24px' }}>
         <SmartInsights transactions={transactions} goals={goals} currency={currency} />
       </motion.div>
 
@@ -215,6 +246,42 @@ export default function Dashboard({ transactions, goals, currency }) {
            </div>
         </motion.div>
       </div>
+
+      {/* Lịch sử giao dịch gần đây tích hợp Xóa */}
+      <motion.div variants={itemVariants} className="friendly-card" style={{ padding: '24px' }}>
+        <h3 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+           <AlertOctagon size={20} color="var(--primary)"/> Giao dịch gần đây
+        </h3>
+        {transactions.length === 0 ? (
+           <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '20px 0' }}>Chưa có giao dịch nào.</p>
+        ) : (
+           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+             {transactions.slice(0, 5).map(t => (
+               <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'var(--surface-base)', borderRadius: '16px', border: '1px solid var(--border-glass)' }}>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{ background: 'var(--surface-opaque)', padding: '10px', borderRadius: '12px', fontSize: '18px' }}>
+                       {t.amount > 0 ? '💰' : '💸'}
+                    </div>
+                    <div>
+                       <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{t.note}</div>
+                       <div style={{ fontSize: '12px', color: 'var(--text-secondary)', display: 'flex', gap: '8px', marginTop: '4px' }}>
+                         <span>{t.date}</span> • <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>{t.category}</span>
+                       </div>
+                    </div>
+                 </div>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '16px', color: t.amount > 0 ? 'var(--success)' : 'var(--text-primary)' }}>
+                      {t.amount > 0 ? '+' : ''}{formatCurrency(t.amount, currency)}
+                    </div>
+                    <button onClick={() => onDeleteTx && onDeleteTx(t.id)} className="btn-icon" style={{ borderColor: 'var(--danger-bg)', color: 'var(--danger)', padding: '6px', borderRadius: '8px' }} title="Xoá giao dịch">
+                      ✖
+                    </button>
+                 </div>
+               </div>
+             ))}
+           </div>
+        )}
+      </motion.div>
 
     </motion.div>
   );

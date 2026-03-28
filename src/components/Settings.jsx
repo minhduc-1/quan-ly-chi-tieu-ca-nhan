@@ -140,13 +140,29 @@ export default function Settings({ user, onLogout, currency, setCurrency, update
                     logAction(user?.email, 'Đổi Tiền tệ', `Chuyển sang ${e.target.value}`);
                  }} 
                  className="input-friendly"
-                 style={{ width: '100%', appearance: 'none', background: 'var(--surface-base)', fontSize: '15px', padding: '14px' }}
+                 style={{ width: '100%', appearance: 'none', background: 'var(--surface-base)', fontSize: '15px', padding: '14px', marginBottom: '24px' }}
                >
                  <option value="VND">Tiền Việt (VNĐ)</option>
                  <option value="USD">Dollar Mỹ (USD $)</option>
                  <option value="EUR">Euro Châu Âu (EUR €)</option>
                  <option value="JPY">Yên Nhật (JPY ¥)</option>
                </select>
+
+               <label style={{ display: 'block', fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '12px', fontWeight: '600' }}>
+                  Hạn Mức Ngân Sách Tháng
+               </label>
+               <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '16px' }}>Đặt giới hạn cảnh báo khi dòng tiền ra vượt quá mốc này.</p>
+               
+               <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                 <input 
+                    type="number"
+                    className="input-friendly"
+                    value={monthlyBudget}
+                    onChange={(e) => setMonthlyBudget(Number(e.target.value))}
+                    style={{ flex: 1, padding: '14px', fontSize: '15px', margin: 0 }}
+                    placeholder="VD: 20000000"
+                 />
+               </div>
             </div>
          </section>
 
