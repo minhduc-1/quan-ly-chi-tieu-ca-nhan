@@ -46,11 +46,15 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [currency, setCurrency] = useState('VND'); 
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
+  const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('gemini_api_key_' + (user?.email || '')) || '');
   const [monthlyBudget, setMonthlyBudget] = useState(() => Number(localStorage.getItem('budget_' + (user?.email || ''))) || 20000000);
 
   useEffect(() => {
-    if (user) localStorage.setItem('budget_' + user.email, monthlyBudget);
-  }, [monthlyBudget, user]);
+    if (user) {
+       localStorage.setItem('budget_' + user.email, monthlyBudget);
+       localStorage.setItem('gemini_api_key_' + user.email, geminiApiKey);
+    }
+  }, [monthlyBudget, geminiApiKey, user]);
   
   // Data State - Gán cho một User cụ thể
   const [allTransactions, setAllTransactions] = useState(() => loadData('tx_data', []));
@@ -497,6 +501,12 @@ export default function App() {
     setAllGoals(prev => [...prev, { ...g, owner: user.email }]);
   };
 
+  const handleDeleteGoal = (id) => {
+    if (window.confirm("BẠN CÓ CHẮC CHẮN MỐI TÌNH NÀY SẼ KẾT THÚC?\nMục tiêu này sẽ bị xóa bỏ vĩnh viễn không thể khôi phục.")) {
+        setAllGoals(prev => prev.filter(g => g.id !== id));
+    }
+  };
+
   const moveToTrash = (item, type = 'KHÁC') => {
      setTrashData(prev => [{ ...item, deletedAt: new Date().getTime(), sourceType: type }, ...prev]);
   };
@@ -538,14 +548,14 @@ export default function App() {
 
   const renderContent = () => {
     switch(activeTab) {
-      case 'dashboard': return <Dashboard transactions={myTransactions} goals={myGoals} currency={currency} onDeleteTx={handleDeleteTx} monthlyBudget={monthlyBudget} user={user} moveToTrash={moveToTrash} />;
+      case 'dashboard': return <Dashboard transactions={myTransactions} goals={myGoals} currency={currency} onDeleteTx={handleDeleteTx} onDeleteGoal={handleDeleteGoal} monthlyBudget={monthlyBudget} user={user} moveToTrash={moveToTrash} />;
       case 'journal': return <DailyJournal user={user} currency={currency} allJournals={allJournals} setAllJournals={setAllJournals} handleAddTx={handleAddTx} />;
       case 'group': return <GroupWallet user={user} currency={currency} allGroups={allGroups} setAllGroups={setAllGroups} allGroupTx={allGroupTx} setAllGroupTx={setAllGroupTx} moveToTrash={moveToTrash} />;
       case 'reports': return <Reports transactions={myTransactions} currency={currency} onDeleteTx={handleDeleteTx} />;
       case 'debts': return <DebtManager currency={currency} debts={myDebts} allDebts={allDebts} setAllDebts={setAllDebts} user={user} />;
-      case 'settings': return <Settings user={user} onLogout={handleLogout} currency={currency} setCurrency={setCurrency} updateUserProfile={updateUserProfile} monthlyBudget={monthlyBudget} setMonthlyBudget={setMonthlyBudget} onResetAccountData={handleResetAccountData} />;
+      case 'settings': return <Settings user={user} onLogout={handleLogout} currency={currency} setCurrency={setCurrency} updateUserProfile={updateUserProfile} monthlyBudget={monthlyBudget} setMonthlyBudget={setMonthlyBudget} onResetAccountData={handleResetAccountData} geminiApiKey={geminiApiKey} setGeminiApiKey={setGeminiApiKey} />;
       case 'trash': return <Trash user={user} currency={currency} trashData={trashData} setTrashData={setTrashData} restoreItem={handleRestoreTrash} emptyTrash={handleEmptyTrash} />;
-      default: return <Dashboard transactions={myTransactions} goals={myGoals} currency={currency} onDeleteTx={handleDeleteTx} monthlyBudget={monthlyBudget} user={user} moveToTrash={moveToTrash} />;
+      default: return <Dashboard transactions={myTransactions} goals={myGoals} currency={currency} onDeleteTx={handleDeleteTx} onDeleteGoal={handleDeleteGoal} monthlyBudget={monthlyBudget} user={user} moveToTrash={moveToTrash} />;
     }
   };
 
@@ -662,7 +672,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <AIChatbot transactions={myTransactions} />
+      <AIChatbot transactions={myTransactions} geminiApiKey={geminiApiKey} currency={currency} />
     </div>
   );
 }

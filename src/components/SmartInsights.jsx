@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Zap, AlertTriangle, ShieldCheck, Flame, HeartPulse, Target } from 'lucide-react';
 import GoalTracker from './GoalTracker';
 
-export default function SmartInsights({ transactions, goals, currency }) {
+export default function SmartInsights({ transactions, goals, currency, onDeleteGoal }) {
   const [insight, setInsight] = useState(null);
 
   useEffect(() => {
@@ -145,7 +145,7 @@ export default function SmartInsights({ transactions, goals, currency }) {
                    Hệ thống chưa ghi nhận mục tiêu nào.<br/>Vui lòng chia sẻ kế hoạch bằng cách "Thiết Lập Mục Tiêu".
                 </div>
              ) : (
-                <GoalTracker goals={goals} currency={currency} />
+                <GoalTracker goals={goals} currency={currency} onDeleteGoal={onDeleteGoal} />
              )}
         </div>
         

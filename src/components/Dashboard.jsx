@@ -18,7 +18,7 @@ const itemVariants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
 };
 
-export default function Dashboard({ transactions, goals, currency, onDeleteTx, monthlyBudget, user, moveToTrash }) {
+export default function Dashboard({ transactions, goals, currency, onDeleteTx, onDeleteGoal, monthlyBudget, user, moveToTrash }) {
   const expenseTransactions = transactions.filter(t => t.amount < 0);
   const incomeTransactions = transactions.filter(t => t.amount > 0);
   
@@ -172,7 +172,7 @@ export default function Dashboard({ transactions, goals, currency, onDeleteTx, m
       </motion.div>
 
       <motion.div variants={itemVariants} style={{ marginTop: '24px' }}>
-        <SmartInsights transactions={transactions} goals={goals} currency={currency} />
+        <SmartInsights transactions={transactions} goals={goals} currency={currency} onDeleteGoal={onDeleteGoal} />
       </motion.div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>

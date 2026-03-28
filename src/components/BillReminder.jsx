@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, CheckCircle2, Circle, Trash2 } from 'lucide-react';
+import { Calendar, CheckCircle2, Circle, Trash2, Plus } from 'lucide-react';
 import { saveData, loadData } from '../services/StorageService';
 
 export default function BillReminder({ user, moveToTrash }) {
@@ -14,6 +14,29 @@ export default function BillReminder({ user, moveToTrash }) {
   const [bills, setBills] = useState(() => loadData('bills_' + (user?.email || ''), defaultBills));
   const currentDay = new Date().getDate();
   const currentMonth = new Date().getMonth(); 
+
+  const [newBillName, setNewBillName] = useState('');
+  const [newBillDate, setNewBillDate] = useState('');
+
+  const handleAddCustomBill = (e) => {
+     e.preventDefault();
+     if (!newBillName || !newBillDate) return;
+     let dateNum = parseInt(newBillDate);
+     if (dateNum < 1 || dateNum > 31) {
+         alert('Ngày hạn chót phải từ 1 đến 31 (Ngày hàng tháng)!');
+         return;
+     }
+
+     const newBill = {
+         id: 'custom-' + Date.now().toString(),
+         name: newBillName,
+         dueDate: dateNum,
+         isPaid: false
+     };
+     setBills(prev => [newBill, ...prev]);
+     setNewBillName('');
+     setNewBillDate('');
+  };
 
   useEffect(() => {
     // Reset isPaid state if we enter a new month (simplified logic)
@@ -128,6 +151,14 @@ export default function BillReminder({ user, moveToTrash }) {
           })}
         </AnimatePresence>
       </div>
+      
+      <form onSubmit={handleAddCustomBill} style={{ display: 'flex', gap: '8px', marginTop: '20px', padding: '16px', background: 'var(--surface-opaque)', borderRadius: '16px', border: '1px dashed var(--primary)' }}>
+         <input type="text" placeholder="Thêm nhắc nhở cá nhân (VD: Trả nợ cũ)" required value={newBillName} onChange={e => setNewBillName(e.target.value)} className="input-glass" style={{ flex: 2, padding: '12px', fontSize: '14px', border: 'none', background: 'var(--surface-base)' }} />
+         <input type="number" placeholder="Ngày hẹn (1-31)" required min="1" max="31" value={newBillDate} onChange={e => setNewBillDate(e.target.value)} className="input-glass" style={{ flex: 1, padding: '12px', fontSize: '14px', border: 'none', background: 'var(--surface-base)' }} />
+         <button type="submit" className="btn-primary" style={{ padding: '0 20px' }}>
+            <Plus size={18} /> Thêm
+         </button>
+      </form>
     </motion.div>
   );
 }

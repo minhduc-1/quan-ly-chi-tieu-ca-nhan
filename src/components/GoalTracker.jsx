@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion';
-import { Target, Flag, Zap } from 'lucide-react';
+import { Target, Flag, Zap, Trash2 } from 'lucide-react';
 import { formatCurrency } from '../utils/format';
 
-export default function GoalTracker({ goals, currency }) {
+export default function GoalTracker({ goals, currency, onDeleteGoal }) {
   if (!goals || goals.length === 0) return null;
 
   return (
@@ -23,7 +23,19 @@ export default function GoalTracker({ goals, currency }) {
                  <div style={{ fontWeight: '600', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                    <Flag size={16} color="var(--accent)" /> {goal.name}
                  </div>
-                 <span className="badge primary">{percent.toFixed(0)}%</span>
+                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                   <span className="badge primary">{percent.toFixed(0)}%</span>
+                   <button 
+                      onClick={() => onDeleteGoal && onDeleteGoal(goal.id)}
+                      className="btn-icon" 
+                      style={{ padding: '4px', color: 'var(--danger)', opacity: 0.7, border: 'none' }}
+                      title="Xóa mục tiêu này"
+                      onMouseEnter={(e) => e.currentTarget.style.opacity = 1}
+                      onMouseLeave={(e) => e.currentTarget.style.opacity = 0.7}
+                   >
+                      <Trash2 size={16} />
+                   </button>
+                 </div>
               </div>
               
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--text-muted)', marginBottom: '12px' }}>

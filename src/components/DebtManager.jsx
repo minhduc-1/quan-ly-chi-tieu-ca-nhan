@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency } from '../utils/format';
 import { logAction } from '../services/AuditService';
-import { Users, AlertCircle, CheckCircle2, UserPlus, FileSpreadsheet, Plus, TrendingDown, TrendingUp } from 'lucide-react';
+import { Users, AlertCircle, CheckCircle2, UserPlus, FileSpreadsheet, Plus, TrendingDown, TrendingUp, Trash2 } from 'lucide-react';
 
 export default function DebtManager({ currency, debts, allDebts, setAllDebts, user }) {
   const [showSplit, setShowSplit] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+  
+  const [splitData, setSplitData] = useState({ total: '', count: '', names: '' });
+  const [splitResult, setSplitResult] = useState(null);
 
   // Thống kê nhanh
   const totalLent = debts.filter(d => d.type === 'lent' && d.status === 'pending').reduce((sum, d) => sum + Number(d.amount), 0);
@@ -16,6 +19,35 @@ export default function DebtManager({ currency, debts, allDebts, setAllDebts, us
     const updatedAllDebts = allDebts.map(d => d.id === id ? { ...d, status: 'paid' } : d);
     setAllDebts(updatedAllDebts);
     logAction(user?.email, 'Xóa Nợ', `Xác nhận đã thanh toán/đòi thành công khoản nợ ID: ${id}`);
+  };
+
+  const handleDeleteDebt = (id) => {
+    if (window.confirm("BẠN CÓ CHẮC MUỐN XÓA KHOẢN NÀY?\nDữ liệu nợ này sẽ bị xóa không thể khôi phục.")) {
+        setAllDebts(allDebts.filter(d => d.id !== id));
+        logAction(user?.email, 'Xóa Nợ', `Xóa vĩnh viễn khoản nợ khỏi hệ thống ID: ${id}`);
+    }
+  };
+
+  const handleCalculateSplit = () => {
+     let { total, count, names } = splitData;
+     total = parseInt(total);
+     count = parseInt(count);
+     
+     if (!total || !count || count <= 0) return alert('Vui lòng nhập Tổng bill và Số người hợp lệ!');
+     
+     const amountPerPerson = Math.ceil(total / count);
+     let nameList = names ? names.split(',').map(n => n.trim()).filter(n => n) : [];
+     
+     if (nameList.length > 0 && nameList.length !== count) {
+         alert('Số người nhập ở tên (' + nameList.length + ') không khớp với tổng số người tham gia (' + count + ').');
+         return;
+     }
+     
+     if (nameList.length === 0) {
+         nameList = Array.from({length: count}, (_, i) => `Người ${i+1}`);
+     }
+
+     setSplitResult({ amountPerPerson, nameList });
   };
 
   const handleAddDebt = (e) => {
@@ -97,19 +129,34 @@ export default function DebtManager({ currency, debts, allDebts, setAllDebts, us
             exit={{ opacity: 0, height: 0 }}
             style={{ overflow: 'hidden' }}
           >
-             <div className="friendly-card" style={{ padding: '24px', border: '1px solid var(--warning)' }}>
-                <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 16px 0', color: 'var(--warning)' }}>
-                   <Users size={24} /> Chia Tiền Nhóm (Split Bill)
-                </h3>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                   <input type="number" placeholder="Nhập tổng bill (VD: 3000000)" className="input-glass" />
-                   <input type="number" placeholder="Số người tham gia (VD: 4)" className="input-glass" />
-                </div>
-                <input type="text" placeholder="Tên từng người (Cách nhau bởi dấu phẩy)" className="input-glass" style={{ marginTop: '16px', width: '100%' }} />
-                <button className="btn-primary" style={{ background: 'var(--warning)', marginTop: '16px', color: '#000' }}>
-                   <FileSpreadsheet size={18} /> Tính Toán Nhanh
-                </button>
-             </div>
+             <div className="friendly-card" style={{ padding: '24px', border: 'none', background: 'var(--surface-opaque)', boxShadow: '0 8px 32px rgba(245, 158, 11, 0.1)', backdropFilter: 'blur(10px)' }}>
+                 <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '0 0 16px 0', color: 'var(--warning)' }}>
+                    <Users size={24} /> Trợ lý Chia Tiền Nhóm (Split Bill)
+                 </h3>
+                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <input type="number" min="0" placeholder="Nhập tổng bill (VD: 3000000)" className="input-glass" style={{ padding: '16px', fontSize: '15px' }} value={splitData.total} onChange={(e) => setSplitData({...splitData, total: e.target.value})} />
+                    <input type="number" min="1" placeholder="Số người tham gia (VD: 4)" className="input-glass" style={{ padding: '16px', fontSize: '15px' }} value={splitData.count} onChange={(e) => setSplitData({...splitData, count: e.target.value})} />
+                 </div>
+                 <input type="text" placeholder="Tên từng người (Cách nhau bằng dấu phẩy, không bắt buộc)" className="input-glass" style={{ marginTop: '16px', width: '100%', padding: '16px', fontSize: '15px' }} value={splitData.names} onChange={(e) => setSplitData({...splitData, names: e.target.value})} />
+                 
+                 <button onClick={handleCalculateSplit} className="btn-primary" style={{ background: 'var(--warning)', marginTop: '16px', color: '#fff', padding: '14px', width: '100%', fontSize: '16px' }}>
+                    <FileSpreadsheet size={20} /> Tính Toán Nhanh
+                 </button>
+
+                 {splitResult && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: '20px', padding: '20px', background: 'var(--warning-bg)', borderRadius: '16px' }}>
+                       <h4 style={{ margin: '0 0 16px 0', color: 'var(--text-primary)' }}>Kết Quả Tính Toán: Mỗi người trả <span style={{ color: 'var(--danger)', fontSize: '18px' }}>{formatCurrency(splitResult.amountPerPerson, currency)}</span></h4>
+                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+                          {splitResult.nameList.map((name, i) => (
+                             <div key={i} style={{ display: 'flex', justifyContent: 'space-between', background: 'var(--surface-base)', padding: '12px', borderRadius: '12px', fontSize: '14px' }}>
+                                <span style={{ fontWeight: '500' }}>{name}</span>
+                                <span style={{ color: 'var(--danger)', fontWeight: 'bold' }}>{formatCurrency(splitResult.amountPerPerson, currency)}</span>
+                             </div>
+                          ))}
+                       </div>
+                    </motion.div>
+                 )}
+              </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -154,15 +201,27 @@ export default function DebtManager({ currency, debts, allDebts, setAllDebts, us
                        "{debt.note}"
                     </div>
                     
-                    {debt.status === 'pending' ? (
-                       <button onClick={() => handleMarkPaid(debt.id)} className="btn-primary" style={{ width: '100%', background: 'var(--primary-bg)', color: 'var(--primary)' }}>
-                         Xác Nhận Đã Xong
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+                       {debt.status === 'pending' ? (
+                          <button onClick={() => handleMarkPaid(debt.id)} className="btn-primary" style={{ flex: 1, background: 'var(--primary-bg)', color: 'var(--primary)' }}>
+                            Xác Nhận Đã Xong
+                          </button>
+                       ) : (
+                          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: 'var(--success)', padding: '12px', background: 'var(--success-bg)', borderRadius: '12px', fontWeight: 'bold' }}>
+                             <CheckCircle2 size={18} /> Đã Thanh Toán
+                          </div>
+                       )}
+                       <button 
+                          onClick={() => handleDeleteDebt(debt.id)} 
+                          className="btn-icon" 
+                          style={{ borderColor: 'transparent', color: 'var(--danger)', opacity: 0.7 }}
+                          onMouseEnter={(e) => { e.currentTarget.style.opacity = 1; e.currentTarget.style.borderColor = 'var(--danger-bg)'; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.opacity = 0.7; e.currentTarget.style.borderColor = 'transparent'; }}
+                          title="Xóa vĩnh viễn khoản nợ"
+                       >
+                          <Trash2 size={18} />
                        </button>
-                    ) : (
-                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: 'var(--success)', padding: '12px', background: 'var(--success-bg)', borderRadius: '12px', fontWeight: 'bold' }}>
-                          <CheckCircle2 size={18} /> Đã Thanh Toán
-                       </div>
-                    )}
+                    </div>
                  </motion.div>
                ))}
             </div>
