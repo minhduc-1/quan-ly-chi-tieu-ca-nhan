@@ -146,7 +146,7 @@ export default function Dashboard({ transactions, goals, currency, onDeleteTx, m
                   {budgetUsedPercent >= 80 ? (
                      <strong style={{ color: 'var(--danger)' }}>⚠️ Bạn đã tiêu {budgetUsedPercent.toFixed(1)}% ngân sách!</strong>
                   ) : (
-                     <React.Fragment>Đã sử dụng {budgetUsedPercent.toFixed(1)}% ngân sách tháng</React.Fragment>
+                     <>Đã sử dụng {budgetUsedPercent.toFixed(1)}% ngân sách tháng</>
                   )}
                </span>
                <span>{formatCurrency(monthlyBudget, currency)}</span>

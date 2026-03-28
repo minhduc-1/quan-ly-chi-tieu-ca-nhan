@@ -5,7 +5,7 @@ import { saveData, loadData } from '../services/StorageService';
 import { logAction } from '../services/AuditService';
 import { DownloadCloud, UploadCloud, Coins, ShieldAlert, User, Mail, Database, LogOut, Flame, Edit3, Check, X } from 'lucide-react';
 
-export default function Settings({ user, onLogout, currency, setCurrency, updateUserProfile }) {
+export default function Settings({ user, onLogout, currency, setCurrency, updateUserProfile, monthlyBudget, setMonthlyBudget }) {
   const [msg, setMsg] = useState('');
   const [isEditingName, setIsEditingName] = useState(false);
   const [editNameValue, setEditNameValue] = useState(user.name);
