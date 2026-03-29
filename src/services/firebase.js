@@ -8,12 +8,13 @@ import { getFirestore } from "firebase/firestore";
 // Nếu chưa dán hoặc dán sai, App vẫn tiếp tục chạy hoàn hảo dưới dạng Local Offline thông thường.
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "123456789",
-  appId: "1:123456:web:123456"
+  apiKey: "AIzaSyA_wbQKsvOyDe3gFpe-b5Q2MkuS3WITBj8",
+  authDomain: "do-an-tot-nghiep-2e56d.firebaseapp.com",
+  projectId: "do-an-tot-nghiep-2e56d",
+  storageBucket: "do-an-tot-nghiep-2e56d.firebasestorage.app",
+  messagingSenderId: "1023721035228",
+  appId: "1:1023721035228:web:70a5d6a210443fbb7beb19",
+  measurementId: "G-99GY7R0JK3"
 };
 
 let app, db = null;
