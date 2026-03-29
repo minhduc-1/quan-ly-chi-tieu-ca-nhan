@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import CryptoJS from 'crypto-js';
-import { LayoutDashboard, Wallet, Target, PieChart, Receipt, Settings as SettingsIcon, LogOut, Moon, Sun, ShieldCheck, UserPlus, LogIn, ChevronRight, MailCheck, Lock, AlertTriangle, BookOpen, Users, Trash2 } from 'lucide-react';
+import { LayoutDashboard, Wallet, Target, PieChart, Receipt, Settings as SettingsIcon, LogOut, Moon, Sun, ShieldCheck, UserPlus, LogIn, ChevronRight, MailCheck, Lock, AlertTriangle, BookOpen, Users, Trash2, Bell } from 'lucide-react';
 
 import Dashboard from './components/Dashboard';
 import TransactionForm from './components/TransactionForm';
@@ -59,15 +59,14 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [currency, setCurrency] = useState('VND'); 
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
-  const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('gemini_api_key_' + (user?.email || '')) || '');
+  const [showNotifications, setShowNotifications] = useState(false);
   const [monthlyBudget, setMonthlyBudget] = useState(() => Number(localStorage.getItem('budget_' + (user?.email || ''))) || 20000000);
 
   useEffect(() => {
     if (user) {
        localStorage.setItem('budget_' + user.email, monthlyBudget);
-       localStorage.setItem('gemini_api_key_' + user.email, geminiApiKey);
     }
-  }, [monthlyBudget, geminiApiKey, user]);
+  }, [monthlyBudget, user]);
   
   // Data State - Gán cho một User cụ thể
   const [allTransactions, setAllTransactions] = useState(() => loadData('tx_data', []));
@@ -630,7 +629,7 @@ export default function App() {
       case 'group': return <GroupWallet user={user} currency={currency} allGroups={allGroups} setAllGroups={setAllGroups} allGroupTx={allGroupTx} setAllGroupTx={setAllGroupTx} moveToTrash={moveToTrash} />;
       case 'reports': return <Reports transactions={myTransactions} currency={currency} onDeleteTx={handleDeleteTx} />;
       case 'debts': return <DebtManager currency={currency} debts={myDebts} allDebts={allDebts} setAllDebts={setAllDebts} user={user} />;
-      case 'settings': return <Settings user={user} onLogout={handleLogout} currency={currency} setCurrency={setCurrency} updateUserProfile={updateUserProfile} monthlyBudget={monthlyBudget} setMonthlyBudget={setMonthlyBudget} onResetAccountData={handleResetAccountData} geminiApiKey={geminiApiKey} setGeminiApiKey={setGeminiApiKey} />;
+      case 'settings': return <Settings user={user} onLogout={handleLogout} currency={currency} setCurrency={setCurrency} updateUserProfile={updateUserProfile} monthlyBudget={monthlyBudget} setMonthlyBudget={setMonthlyBudget} onResetAccountData={handleResetAccountData} />;
       case 'trash': return <Trash user={user} currency={currency} trashData={trashData} setTrashData={setTrashData} restoreItem={handleRestoreTrash} emptyTrash={handleEmptyTrash} />;
       default: return <Dashboard transactions={myTransactions} goals={myGoals} currency={currency} onDeleteTx={handleDeleteTx} onDeleteGoal={handleDeleteGoal} monthlyBudget={monthlyBudget} user={user} moveToTrash={moveToTrash} />;
     }
@@ -690,11 +689,6 @@ export default function App() {
       </aside>
 
       <main className="main-content">
-        {broadcastMessage && (
-          <div style={{ background: 'var(--danger)', color: 'white', padding: '12px 40px', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', zIndex: 50, position: 'relative' }}>
-             <AlertTriangle size={18}/> THÔNG BÁO TỪ GIÁM ĐỐC HỆ THỐNG: {broadcastMessage}
-          </div>
-        )}
         <header style={{ 
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
           padding: '24px 40px', background: 'var(--surface-opaque)',
@@ -716,6 +710,51 @@ export default function App() {
              <button onClick={toggleTheme} className="btn-icon" style={{ borderRadius: '14px', width: '44px', height: '44px' }} title="Tắt/Mở đèn (Đèn tối/sáng)">
                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
              </button>
+             
+             <div style={{ position: 'relative' }}>
+                <button onClick={() => setShowNotifications(!showNotifications)} className="btn-icon" style={{ borderRadius: '14px', width: '44px', height: '44px', borderColor: broadcastMessage ? 'var(--danger)' : '' }} title="Thông báo hệ thống">
+                  <Bell size={20} color={broadcastMessage ? 'var(--danger)' : 'currentColor'} />
+                </button>
+                {broadcastMessage && (
+                   <span style={{ position: 'absolute', top: 0, right: 0, width: 12, height: 12, borderRadius: '50%', background: 'var(--danger)', border: '2px solid var(--surface-opaque)' }}></span>
+                )}
+                
+                <AnimatePresence>
+                  {showNotifications && (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
+                      style={{ position: 'absolute', top: '100%', right: 0, marginTop: '12px', width: '360px', background: 'var(--surface-opaque)', borderRadius: '16px', border: '1px solid var(--border-light)', boxShadow: 'var(--shadow-lg)', zIndex: 100, overflow: 'hidden' }}
+                    >
+                      <div style={{ padding: '16px', background: 'var(--primary-bg)', color: 'var(--primary)', fontWeight: 'bold', borderBottom: '1px solid var(--border-light)', display: 'flex', justifyContent: 'space-between' }}>
+                         <span>Hộp Thư Hệ Thống</span>
+                         <span style={{ fontSize: '13px', background: 'var(--primary)', color: 'white', padding: '2px 8px', borderRadius: '12px' }}>{broadcastMessage ? '1' : '0'} mới</span>
+                      </div>
+                      <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                         {broadcastMessage ? (
+                           <div style={{ padding: '16px', borderBottom: '1px solid var(--border-light)', display: 'flex', gap: '12px', background: 'var(--danger-bg)' }}>
+                              <div style={{ color: 'var(--danger)', background: 'white', padding: '8px', borderRadius: '50%', height: 'fit-content' }}><AlertTriangle size={18}/></div>
+                              <div>
+                                 <strong style={{ display: 'block', fontSize: '14px', marginBottom: '4px', color: 'var(--danger)' }}>BÁO ĐỘNG TỪ GIÁM ĐỐC</strong>
+                                 <p style={{ fontSize: '13.5px', color: 'var(--danger)', margin: 0, opacity: 0.9 }}>{broadcastMessage}</p>
+                              </div>
+                           </div>
+                         ) : (
+                           <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
+                              Bạn không có thông báo mới nào.
+                           </div>
+                         )}
+                         <div style={{ padding: '16px', display: 'flex', gap: '12px' }}>
+                            <div style={{ color: 'var(--primary)', background: 'var(--primary-bg)', padding: '8px', borderRadius: '50%', height: 'fit-content' }}><ShieldCheck size={18}/></div>
+                            <div>
+                               <strong style={{ display: 'block', fontSize: '14px', marginBottom: '4px' }}>Bảo mật an toàn</strong>
+                               <p style={{ fontSize: '13.5px', color: 'var(--text-secondary)', margin: 0 }}>Hệ thống đang được mã hóa đầu cuối phân đoạn dữ liệu cục bộ.</p>
+                            </div>
+                         </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+             </div>
+
              {activeTab === 'dashboard' && (
                <>
                  <button onClick={() => setShowGoalForm(true)} className="btn-secondary">
@@ -754,7 +793,7 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <AIChatbot transactions={myTransactions} geminiApiKey={geminiApiKey} currency={currency} />
+      <AIChatbot transactions={myTransactions} currency={currency} />
     </div>
   );
 }

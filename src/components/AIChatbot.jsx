@@ -1,15 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bot, X, Send, Sparkles, Key } from 'lucide-react';
+import { Bot, X, Send, Sparkles } from 'lucide-react';
 import { formatCurrency } from '../utils/format';
 import { generateAIResponse } from '../services/aiService';
 
 export default function AIChatbot({ transactions, currency = 'VND' }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [apiKey, setApiKey] = useState(() => localStorage.getItem('gemini_api_key') || '');
-  const [showApiKeyInput, setShowApiKeyInput] = useState(!localStorage.getItem('gemini_api_key'));
   const [messages, setMessages] = useState([
-    { role: 'ai', text: 'Chào cậu! Mình là trợ lý AI chuyên gia tài chính. Cậu muốn phân tích dữ liệu hôm nay, xin lời khuyên tiết kiệm, hay lập kế hoạch trả nợ?' }
+    { role: 'ai', text: 'Chào cậu! Mình là trợ lý AI chuyên gia tài chính. Cậu muốn phân tích dữ liệu hôm nay, xin lời khuyên tiết kiệm, hay xem số dư hiện tại?' }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -21,26 +19,9 @@ export default function AIChatbot({ transactions, currency = 'VND' }) {
     }
   }, [messages, isTyping]);
 
-  const handleSaveApiKey = () => {
-    if (apiKey.trim().startsWith('AIza')) {
-      localStorage.setItem('gemini_api_key', apiKey.trim());
-      setShowApiKeyInput(false);
-      setMessages(prev => [...prev, { role: 'ai', text: 'Tuyệt vời! Kết nối AI thành công. Cậu hỏi thử mình xem tháng này cậu tiêu vào đồ ăn bao nhiêu tiền đi?' }]);
-    } else {
-      alert("Khóa API chưa chính xác (thường bắt đầu bằng AIza...). Cậu kiểm tra lại khóa của Google nhé!");
-    }
-  };
-
-  const clearApiKey = () => {
-    localStorage.removeItem('gemini_api_key');
-    setApiKey('');
-    setShowApiKeyInput(true);
-    setMessages([{ role: 'ai', text: 'Cậu đã đăng xuất khóa API. Hãy nhập khóa mới để mình phục vụ nhé!' }]);
-  };
-
   const handleSend = async (e) => {
     e.preventDefault();
-    if (!input.trim() || showApiKeyInput) return;
+    if (!input.trim()) return;
     
     const userMessage = input.trim();
     setMessages(prev => [...prev, { role: 'user', text: userMessage }]);
@@ -59,7 +40,7 @@ export default function AIChatbot({ transactions, currency = 'VND' }) {
            currency
        };
 
-       const aiReply = await generateAIResponse(userMessage, apiKey, context, messages.slice(-10));
+       const aiReply = await generateAIResponse(userMessage, null, context, messages.slice(-10));
        
        setMessages(prev => [...prev, { role: 'ai', text: aiReply }]);
     } catch (err) {
@@ -167,53 +148,30 @@ export default function AIChatbot({ transactions, currency = 'VND' }) {
               )}
             </div>
 
-            {/* Input Gửi Tin Nhắn / Hoặc Yêu Cầu Nhập Yêu Cầu API Key */}
-            {showApiKeyInput ? (
-               <div style={{ padding: '16px 20px', borderTop: '1px solid var(--border-light)', background: 'var(--surface-opaque)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <label style={{ fontSize: '13.5px', color: 'var(--text-main)', fontWeight: '500' }}>🔑 Để gọi được AI, cậu vui lòng điền Google Gemini API Key (Miễn phí) vào đây nhé:</label>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <input 
-                      type="password" 
-                      value={apiKey} 
-                      onChange={(e) => setApiKey(e.target.value)} 
-                      placeholder="AIzaSy..." 
-                      className="input-friendly"
-                      style={{ flex: 1, borderRadius: '20px' }}
-                    />
-                    <button type="button" onClick={handleSaveApiKey} className="btn-primary" style={{ padding: '0 16px', borderRadius: '20px' }}>
-                       Lưu
-                    </button>
-                  </div>
-                  <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noreferrer" style={{ fontSize: '12.5px', color: 'var(--primary)', textDecoration: 'none', opacity: 0.9 }}>👉🏻 Lấy mã API Key tại đây</a>
-               </div>
-            ) : (
-                <form onSubmit={handleSend} style={{ padding: '14px 20px', borderTop: '1px solid var(--border-light)', background: 'var(--surface-opaque)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                    <input 
-                      type="text" 
-                      value={input} 
-                      onChange={(e) => setInput(e.target.value)} 
-                      placeholder="Hỏi AI thông minh..." 
-                      className="input-friendly"
-                      style={{ paddingRight: '56px', borderRadius: '30px' }}
-                    />
-                    <button type="submit" disabled={!input.trim()}
-                      style={{ 
-                        position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', 
-                        background: input.trim() ? 'var(--primary)' : 'var(--border-light)', 
-                        color: input.trim() ? 'white' : 'var(--text-muted)', border: 'none', width: '38px', height: '38px', borderRadius: '50%', 
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: input.trim() ? 'pointer' : 'not-allowed', 
-                        transition: 'all 0.2s' 
-                      }} 
-                    >
-                      <Send size={18} style={{ marginLeft: '-2px' }} />
-                    </button>
-                  </div>
-                  <button type="button" onClick={clearApiKey} style={{ alignSelf: 'center', background: 'transparent', border: 'none', color: 'var(--text-muted)', fontSize: '11.5px', cursor: 'pointer', display: 'flex', gap: '4px', alignItems: 'center', opacity: 0.8, marginTop: '2px' }}>
-                     <Key size={12}/> Đổi API Key khác
-                  </button>
-                </form>
-            )}
+            {/* Input Gửi Tin Nhắn */}
+            <form onSubmit={handleSend} style={{ padding: '14px 20px', borderTop: '1px solid var(--border-light)', background: 'var(--surface-opaque)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <input 
+                  type="text" 
+                  value={input} 
+                  onChange={(e) => setInput(e.target.value)} 
+                  placeholder="Hỏi AI thông minh..." 
+                  className="input-friendly"
+                  style={{ paddingRight: '56px', borderRadius: '30px' }}
+                />
+                <button type="submit" disabled={!input.trim()}
+                  style={{ 
+                    position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)', 
+                    background: input.trim() ? 'var(--primary)' : 'var(--border-light)', 
+                    color: input.trim() ? 'white' : 'var(--text-muted)', border: 'none', width: '38px', height: '38px', borderRadius: '50%', 
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: input.trim() ? 'pointer' : 'not-allowed', 
+                    transition: 'all 0.2s' 
+                  }} 
+                >
+                  <Send size={18} style={{ marginLeft: '-2px' }} />
+                </button>
+              </div>
+            </form>
           </motion.div>
         )}
       </AnimatePresence>
