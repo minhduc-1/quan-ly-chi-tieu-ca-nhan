@@ -2,12 +2,18 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, Send, Tags } from 'lucide-react';
 import Tesseract from 'tesseract.js';
+import { loadData } from '../services/StorageService';
 
 export default function TransactionForm({ onClose, onAdd }) {
   const [smartInput, setSmartInput] = useState('');
   const [parsedData, setParsedData] = useState({ category: 'Khác', amount: '', note: '' });
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [useAI, setUseAI] = useState(false); // Toggle scan receipt
+  const [sysCategories, setSysCategories] = useState([]);
+
+  useEffect(() => {
+     setSysCategories(loadData('system_categories', ['Ăn uống', 'Di chuyển', 'Mua sắm', 'Sinh hoạt', 'Lương/Thưởng']));
+  }, []);
   
   // AI Simulation: Tự động Bóc tách chuỗi (VD: "Uống trà đá 15k" => 15000)
   useEffect(() => {
@@ -39,8 +45,13 @@ export default function TransactionForm({ onClose, onAdd }) {
     else if (txt.includes('lương') || txt.includes('thưởng')) cat = 'Lương/Thưởng';
     else if (txt.includes('sắm') || txt.includes('đồ') || txt.includes('quần áo')) cat = 'Mua sắm';
 
+    // Ưu tiên đè danh mục Mặc định từ Hệ thống nếu từ khóa khớp
+    sysCategories.forEach(c => {
+       if (txt.includes(c.toLowerCase())) cat = c;
+    });
+
     setParsedData({ category: cat, amount: amountVal, note: noteStr || 'Giao dịch nhanh' });
-  }, [smartInput]);
+  }, [smartInput, sysCategories]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -132,9 +143,22 @@ export default function TransactionForm({ onClose, onAdd }) {
               >
                 <div style={{ background: 'var(--surface-opaque)', padding: '16px', borderRadius: '16px', border: '1px solid var(--border-glass)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
                   <div>
-                    <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Loại danh mục</label>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>
-                      <Tags size={16} color="var(--accent)" /> {parsedData.category}
+                    <label style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>Danh mục / Nhãn hiệu</label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '14px', fontWeight: 'bold' }}>
+                      <Tags size={16} color="var(--accent)" />
+                      <select 
+                         value={parsedData.category}
+                         onChange={(e) => setParsedData({...parsedData, category: e.target.value})}
+                         style={{ background: 'transparent', border: 'none', outline: 'none', color: 'var(--primary)', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', maxWidth: '120px' }}
+                      >
+                         <option value="Khác">Khác</option>
+                         <option value={parsedData.category}>{parsedData.category} (AI Suggest)</option>
+                         <optgroup label="Danh Mục Mặc Định">
+                           {sysCategories.map((c, i) => (
+                              <option key={i} value={c}>{c}</option>
+                           ))}
+                         </optgroup>
+                      </select>
                     </div>
                   </div>
                   <div>

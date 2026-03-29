@@ -28,7 +28,11 @@ export default function App() {
      let db = loadData('users_db', defaultUsers);
      // Lọc sạch admin cũ lỡ lưu trong local storage do các phiên bản đồ án trước
      db = db.filter(u => u.role !== 'admin');
-     return [{ email: 'adminwed@gmail.com', password: 'admin@1119990', name: 'Giám Đốc Hệ Thống', role: 'admin' }, ...db];
+     // Backfill createdAt cho tài khoản cũ để vẽ Biểu đồ Recharts
+     const nowStr = new Date().toISOString();
+     const admin = { email: 'adminwed@gmail.com', password: 'admin@1119990', name: 'Giám Đốc Hệ Thống', role: 'admin', createdAt: nowStr };
+     db = db.map(u => u.createdAt ? u : { ...u, createdAt: nowStr });
+     return [admin, ...db];
   });
   useEffect(() => { saveData('users_db', usersDB); }, [usersDB]);
 
@@ -47,6 +51,9 @@ export default function App() {
   const [pendingAdminAccount, setPendingAdminAccount] = useState(null);
 
   // App State
+  const [broadcastMessage, setBroadcastMessage] = useState('');
+  useEffect(() => { setBroadcastMessage(loadData('system_broadcast', '')); }, [user]);
+
   const [showTransactionForm, setShowTransactionForm] = useState(false);
   const [showGoalForm, setShowGoalForm] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -147,6 +154,13 @@ export default function App() {
            return;
        }
        
+       if (account.isDeleted) {
+          return alert('❌ TÀI KHOẢN CỦA BẠN ĐÃ BỊ TỊCH THU\n\nTài khoản này đã bị Giám Đốc xóa hoặc vô hiệu hóa. Vui lòng liên hệ bộ phận hỗ trợ để khôi phục.');
+       }
+       if (account.isLocked) {
+          return alert('🔒 TÀI KHOẢN TẠM KHÓA\n\nBạn đang chịu án phạt tạm giam từ Quản Trị Hệ Thống. Hãy đợi hệ thống mở khóa.');
+       }
+
        if (account.isWarned) {
           alert("⚠️ HỆ THỐNG CẢNH BÁO TÀI KHOẢN CỦA BẠN!\n\nTài khoản của bạn đã bị Giám Đốc Hệ Thống cảnh cáo vì phát hiện giao dịch hoặc hành vi có dấu hiệu bất thường.\nBạn vẫn có thể tiếp tục sử dụng, nhưng vui lòng cẩn trọng. Nếu tái phạm, tài khoản sẽ bị xoá vĩnh viễn.");
        }
@@ -233,7 +247,7 @@ export default function App() {
     
     // Kích hoạt Mã Thuật Toán SHA256 thay vì thô
     const securePwd = hashPwd(pwd);
-    const newUser = { email: tempRegData.email, password: securePwd, name: tempRegData.name, role: 'user' };
+    const newUser = { email: tempRegData.email, password: securePwd, name: tempRegData.name, role: 'user', createdAt: new Date().toISOString() };
     setUsersDB([...usersDB, newUser]);
     
     setUser({
@@ -677,6 +691,11 @@ export default function App() {
       </aside>
 
       <main className="main-content">
+        {broadcastMessage && (
+          <div style={{ background: 'var(--danger)', color: 'white', padding: '12px 40px', fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', zIndex: 50, position: 'relative' }}>
+             <AlertTriangle size={18}/> THÔNG BÁO TỪ GIÁM ĐỐC HỆ THỐNG: {broadcastMessage}
+          </div>
+        )}
         <header style={{ 
           display: 'flex', justifyContent: 'space-between', alignItems: 'center', 
           padding: '24px 40px', background: 'var(--surface-opaque)',
