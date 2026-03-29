@@ -33,9 +33,12 @@ export default function App() {
   const [isCloudSyncing, setIsCloudSyncing] = useState(true);
 
   useEffect(() => {
-    initCloudSyncListener(() => {
-       setTimeout(() => setIsCloudSyncing(false), 800);
-    });
+    // Gọi lệnh gắn Đám Mây ngầm, không cần chờ App đợi
+    initCloudSyncListener(() => {});
+    
+    // Ép buộc tắt Radar sau đúng 1000ms (1 giây) để trải nghiệm luôn mượt mà.
+    // Nếu mạng chậm, Firebase sẽ tự động đẩy dữ liệu và tự xoay sau, không bắt người dùng đứng chờ màn hình này thêm nữa.
+    setTimeout(() => setIsCloudSyncing(false), 1000);
   }, []);
 
   // DB Người dùng
