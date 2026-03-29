@@ -23,22 +23,27 @@ const triggerCloudPush = () => {
    if (pushTimeout) clearTimeout(pushTimeout);
    pushTimeout = setTimeout(async () => {
       try {
-         // Quét lại toàn bộ LocalStorage của App (Chỉ bao gồm các Database keys)
          const GLOBAL_DOC_KEYS = ['users_db', 'tx_data', 'goals_data', 'debts_data', 'journals_data', 'groups_data', 'group_tx_data', 'trash_data', 'system_broadcast', 'broadcast_receipts', 'audit_logs', 'system_categories'];
          
          const payload = {};
          GLOBAL_DOC_KEYS.forEach(k => {
              const raw = localStorage.getItem(k);
-             if(raw) payload[k] = raw; // Gửi thẳng mã Hóa (Sinh viên lấy ăn điểm Bảo mật Cloud)
+             if(raw) payload[k] = raw;
          });
-         payload.lastUpdated = Date.now();
+         
+         // Sinh mốc thời gian duy nhất cho lần đồng bộ này
+         const newRevision = Date.now();
+         payload.lastUpdated = newRevision;
+         
+         // PHẢI cắm cờ tại máy Local trước khi bắn lên để Mạng Màng Lọc onSnapshot của chính máy mình không tự Reload!
+         localStorage.setItem('cloud_last_synced', newRevision);
          
          await setDoc(doc(db, "smart_expense", "v6_global_state"), payload);
          console.log("☁ Upload Đám mây thành công lúc", new Date().toLocaleTimeString());
       } catch (err) {
          console.warn("Lỗi PUSH dữ liệu lên Mạng. (Data của bạn vẫn an toàn trên Máy).", err);
       }
-   }, 2000); // 2 giây debounce: Chờ người dùng ngừng gõ mới Push tránh tốn tài nguyên
+   }, 2000); 
 };
 
 export const loadData = (key, defaultData) => {
@@ -61,33 +66,37 @@ export const initCloudSyncListener = (onSyncReady) => {
         return; 
     }
     
-    // Thu tín hiệu từ Radar Firebase:
     const docRef = doc(db, "smart_expense", "v6_global_state");
     onSnapshot(docRef, (snap) => {
         if(snap.exists()) {
              const data = snap.data();
-             const localTime = Number(localStorage.getItem('cloud_last_synced') || 0);
+             const localRevision = Number(localStorage.getItem('cloud_last_synced') || 0);
 
-             // Nếu Phiên bản trên mây mới hơn Máy tính local hiện tại >1.5s
-             if (data.lastUpdated && data.lastUpdated > localTime + 1500) { 
-                 console.log("☁ [CLOUDSYNC] CẬP NHẬT XUYÊN THIẾT BỊ VỪA ĐÁP XUỐNG! Đang nạp...");
+             // So sánh mã Revision tuyệt đối (Bỏ qua sai lệch Múi Giờ)
+             if (data.lastUpdated && data.lastUpdated !== localRevision) { 
+                 console.log("☁ [CLOUDSYNC] Tải Dữ liệu mới...");
                  
-                 // Giã dông đè vào Cục Bội
                  Object.keys(data).forEach(k => {
                      if (k !== 'lastUpdated') {
                         localStorage.setItem(k, data[k]); 
                      }
                  });
-                 localStorage.setItem('cloud_last_synced', Date.now());
+                 // Đồng bộ mốc Revision máy mình với Máy Chủ
+                 localStorage.setItem('cloud_last_synced', data.lastUpdated);
                  
-                 // Nếu người dùng đang ngồi xài mà máy khác update, Bắt Reload Màn hình
+                 // Áp dụng Cập nhật Xong -> Bắt Lõi App React Tải Lại ngay
                  window.location.reload(); 
-             } else {
-                 // Lần load đầu:
-                 localStorage.setItem('cloud_last_synced', Date.now());
+                 return; // Ngắt luồng Code tại đây, Tải lại giao diện.
+             }
+        } else {
+             // Lần chạy đầu tiên của Máy mới toanh khi Server chưa có data
+             if(!localStorage.getItem('cloud_last_synced')) {
+                localStorage.setItem('cloud_last_synced', Date.now());
              }
         }
-        if(onSyncReady) onSyncReady(); // Lệnh Bật Xanh Màn Hình ở App.jsx
+        
+        // Mở Khóa Giao Diện (Screen Loader biến mất)
+        if(onSyncReady) onSyncReady(); 
     }, (error) => {
         console.warn("Mất kết nối Radar Đám Mây. Tự rơi về Offline Mode.", error);
         if(onSyncReady) onSyncReady();
