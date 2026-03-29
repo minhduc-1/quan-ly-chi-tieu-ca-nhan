@@ -18,6 +18,17 @@ import Trash from './components/Trash';
 import { saveData, loadData, initCloudSyncListener } from './services/StorageService';
 import { logAction } from './services/AuditService';
 
+const useUpdateEffect = (effect, deps) => {
+  const isInitialMount = React.useRef(true);
+  React.useEffect(() => {
+    if (isInitialMount.current) {
+       isInitialMount.current = false;
+    } else {
+       return effect();
+    }
+  }, deps);
+};
+
 export default function App() {
   const [isCloudSyncing, setIsCloudSyncing] = useState(true);
 
@@ -42,7 +53,7 @@ export default function App() {
      db = db.map(u => u.createdAt ? u : { ...u, createdAt: nowStr });
      return [admin, ...db];
   });
-  useEffect(() => { saveData('users_db', usersDB); }, [usersDB]);
+  useUpdateEffect(() => { saveData('users_db', usersDB); }, [usersDB]);
 
   // Auth & Security State
   const [user, setUser] = useState(null); 
@@ -101,13 +112,13 @@ export default function App() {
   const [allGroupTx, setAllGroupTx] = useState(() => loadData('group_tx_data', []));
   const [trashData, setTrashData] = useState(() => loadData('trash_data', []));
 
-  useEffect(() => { saveData('tx_data', allTransactions); }, [allTransactions]);
-  useEffect(() => { saveData('goals_data', allGoals); }, [allGoals]);
-  useEffect(() => { saveData('debts_data', allDebts); }, [allDebts]);
-  useEffect(() => { saveData('journals_data', allJournals); }, [allJournals]);
-  useEffect(() => { saveData('groups_data', allGroups); }, [allGroups]);
-  useEffect(() => { saveData('group_tx_data', allGroupTx); }, [allGroupTx]);
-  useEffect(() => { saveData('trash_data', trashData); }, [trashData]);
+  useUpdateEffect(() => { saveData('tx_data', allTransactions); }, [allTransactions]);
+  useUpdateEffect(() => { saveData('goals_data', allGoals); }, [allGoals]);
+  useUpdateEffect(() => { saveData('debts_data', allDebts); }, [allDebts]);
+  useUpdateEffect(() => { saveData('journals_data', allJournals); }, [allJournals]);
+  useUpdateEffect(() => { saveData('groups_data', allGroups); }, [allGroups]);
+  useUpdateEffect(() => { saveData('group_tx_data', allGroupTx); }, [allGroupTx]);
+  useUpdateEffect(() => { saveData('trash_data', trashData); }, [trashData]);
   
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
