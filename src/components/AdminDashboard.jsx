@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { loadData, saveData } from '../services/StorageService';
 import { ShieldCheck, Trash2, XCircle, Users, Activity, LogOut } from 'lucide-react';
 
-export default function AdminDashboard({ usersDB, setUsersDB, onLogout }) {
+export default function AdminDashboard({ usersDB, setUsersDB, onLogout, allTransactions = [] }) {
   const [logs, setLogs] = useState([]);
   const [activeTab, setActiveTab] = useState('users');
 
@@ -12,18 +12,35 @@ export default function AdminDashboard({ usersDB, setUsersDB, onLogout }) {
   }, []);
 
   const handleClearLogs = () => {
-    if(window.confirm('Cậu có chắc muốn xoá sạch lịch sử hoạt động không? Gần như không thể khôi phục lại đâu đấy!')) {
+    if(window.confirm('Giám đốc có chắc muốn xoá sạch lịch sử hoạt động không? Tài liệu mật sẽ biến mất vĩnh viễn!')) {
        saveData('audit_logs', []);
        setLogs([]);
     }
   };
 
   const handleDeleteUser = (email) => {
-    if (email === 'admin@gmail.com') return alert('Chống chỉ định xoá Giám Đốc Hệ Thống nhé!');
-    if (window.confirm(`Bạn muốn xoá vĩnh viễn tài khoản ${email}? Dữ liệu của họ sẽ bị bỏ lại bơ vơ đó.`)) {
+    if (email === 'adminwed@gmail.com') return alert('Lỗi: Bạn không thể tự sát (Xoá tài khoản Giám Đốc Hệ Thống)!');
+    if (window.confirm(`LỆNH TỬ HÌNH: Bạn muốn xoá vĩnh viễn tài khoản ${email}? Họ sẽ mất quyền truy cập mãi mãi.`)) {
         const newDB = usersDB.filter(u => u.email !== email);
         setUsersDB(newDB);
     }
+  };
+
+  const handleWarnUser = (email, isWarned) => {
+    if (email === 'adminwed@gmail.com') return alert('Không thể răn đe bản thân Giám Đốc!');
+    const actionName = isWarned ? 'GỠ CẢNH CÁO KHỎI' : 'PHẠT THẺ CẢNH CÁO ĐỐI VỚI';
+    if (window.confirm(`XÁC NHẬN: Bạn muốn ${actionName} tài khoản ${email}?`)) {
+        const newDB = usersDB.map(u => u.email === email ? { ...u, isWarned: !isWarned } : u);
+        setUsersDB(newDB);
+    }
+  };
+
+  // Helper tính toán giao dịch
+  const getUserStats = (email) => {
+     const txs = allTransactions.filter(t => t.owner === email);
+     const totalAmount = txs.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+     const hasIrregular = txs.some(t => Math.abs(t.amount) > 100000000); // Giao dịch trên 100M VND là bất thường
+     return { txCount: txs.length, totalAmount, hasIrregular };
   };
 
   return (
@@ -62,36 +79,55 @@ export default function AdminDashboard({ usersDB, setUsersDB, onLogout }) {
               <motion.div key="users" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}>
                  <div className="friendly-card" style={{ padding: '0', overflow: 'hidden' }}>
                    <table style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
-                     <thead style={{ background: 'var(--bg-app)' }}>
+                     <thead style={{ background: 'var(--primary-bg)' }}>
                        <tr>
-                         <th style={{ padding: '20px 24px', color: 'var(--text-secondary)' }}>Thành Viên</th>
-                         <th style={{ padding: '20px 24px', color: 'var(--text-secondary)' }}>Email Đăng Nhập</th>
-                         <th style={{ padding: '20px 24px', color: 'var(--text-secondary)' }}>Sinh Mệnh (Role)</th>
-                         <th style={{ padding: '20px 24px', color: 'var(--text-secondary)', textAlign: 'right' }}>Thao Tác</th>
+                         <th style={{ padding: '20px 24px', color: 'var(--primary)', fontWeight: 'bold' }}>Thành Viên</th>
+                         <th style={{ padding: '20px 24px', color: 'var(--primary)', fontWeight: 'bold' }}>Chi Tiết & Báo Cáo</th>
+                         <th style={{ padding: '20px 24px', color: 'var(--primary)', fontWeight: 'bold' }}>Trạng Thái</th>
+                         <th style={{ padding: '20px 24px', color: 'var(--primary)', fontWeight: 'bold', textAlign: 'right' }}>Thao Tác (Phạt / Xoá)</th>
                        </tr>
                      </thead>
                      <tbody>
-                       {usersDB.map((u, idx) => (
-                         <tr key={idx} style={{ borderBottom: '1px solid var(--border-light)', transition: 'background 0.2s' }}>
+                       {usersDB.map((u, idx) => {
+                         const stats = getUserStats(u.email);
+                         return (
+                         <tr key={idx} style={{ borderBottom: '1px solid var(--border-light)', transition: 'background 0.2s', background: u.isWarned ? 'var(--danger-bg)' : 'transparent' }}>
                            <td style={{ padding: '16px 24px' }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                 <img src={`https://ui-avatars.com/api/?name=${u.name.replace(' ','+')}&background=0d9488&color=fff&rounded=true`} alt="Avatar" width="36" height="36" style={{ borderRadius: '50%' }} />
-                                 <span style={{ fontWeight: '600' }}>{u.name}</span>
+                                 <div style={{ position: 'relative' }}>
+                                   <img src={`https://ui-avatars.com/api/?name=${u.name.replace(' ','+')}&background=0d9488&color=fff&rounded=true`} alt="Avatar" width="40" height="40" style={{ borderRadius: '50%', border: u.role === 'admin' ? '2px solid var(--primary)' : 'none' }} />
+                                   {stats.hasIrregular && <div style={{ position: 'absolute', top: -4, right: -4, width: 14, height: 14, background: 'var(--danger)', borderRadius: '50%', border: '2px solid white' }}></div>}
+                                 </div>
+                                 <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                    <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{u.name}</span>
+                                    <span style={{ fontSize: '12.5px', color: 'var(--text-muted)', fontFamily: 'monospace' }}>{u.email}</span>
+                                 </div>
                               </div>
                            </td>
-                           <td style={{ padding: '20px 24px', color: 'var(--text-secondary)' }}>{u.email}</td>
-                           <td style={{ padding: '20px 24px' }}>
-                              <span className={`badge ${u.role === 'admin' ? 'danger' : 'success'}`}>
-                                 {u.role === 'admin' ? 'Giám Đốc (Boss)' : 'Khách Hàng (User)'}
+                           <td style={{ padding: '16px 24px' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Vào cuối: <b>{u.lastActive || 'Chưa từng'}</b></span>
+                                <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Tổng GD: <b style={{ color: stats.hasIrregular ? 'var(--danger)' : 'var(--text-primary)' }}>{stats.txCount} mục</b></span>
+                                {stats.hasIrregular && <span style={{ fontSize: '12px', color: 'var(--danger)', fontWeight: '600' }}>⚠️ Phát hiện Dòng tiền Lớn</span>}
+                              </div>
+                           </td>
+                           <td style={{ padding: '16px 24px' }}>
+                              <span className={`badge ${u.role === 'admin' ? 'primary' : u.isWarned ? 'danger' : 'success'}`}>
+                                 {u.role === 'admin' ? 'Giám Đốc (Boss)' : u.isWarned ? 'Bị Canh Chừng' : 'Hoạt Động Tốt'}
                               </span>
                            </td>
                            <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                              <button onClick={() => handleDeleteUser(u.email)} disabled={u.role === 'admin'} className="btn-icon" style={{ borderColor: 'transparent', color: u.role === 'admin' ? 'var(--text-muted)' : 'var(--danger)', marginLeft: 'auto' }}>
-                                 <Trash2 size={18} />
-                              </button>
+                              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                <button onClick={() => handleWarnUser(u.email, u.isWarned)} disabled={u.role === 'admin'} className="btn-secondary" style={{ padding: '6px 12px', fontSize: '12.5px', border: u.isWarned ? 'transparent' : '1px solid var(--border-light)', background: u.isWarned ? 'transparent' : 'var(--surface-base)', color: u.isWarned ? 'var(--text-primary)' : 'var(--warning)', fontWeight: 'bold' }}>
+                                   {u.isWarned ? 'X Gỡ Phạt' : 'Rút Thẻ Phạt'}
+                                </button>
+                                <button onClick={() => handleDeleteUser(u.email)} disabled={u.role === 'admin'} className="btn-icon" style={{ borderColor: 'transparent', background: u.role === 'admin' ? 'transparent' : 'var(--danger-bg)', color: u.role === 'admin' ? 'var(--text-muted)' : 'var(--danger)' }}>
+                                   <Trash2 size={18} />
+                                </button>
+                              </div>
                            </td>
                          </tr>
-                       ))}
+                       )})}
                      </tbody>
                    </table>
                  </div>

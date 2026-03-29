@@ -21,10 +21,15 @@ import { logAction } from './services/AuditService';
 export default function App() {
   // DB Người dùng
   const defaultUsers = [
-    { email: 'admin@gmail.com', password: 'admin', name: 'Giám Đốc Hệ Thống', role: 'admin' },
+    { email: 'adminwed@gmail.com', password: 'admin@1119990', name: 'Giám Đốc Hệ Thống', role: 'admin' },
     { email: 'minhduc@gmail.com', password: '123', name: 'Minh Đức', role: 'user' }
   ];
-  const [usersDB, setUsersDB] = useState(() => loadData('users_db', defaultUsers));
+  const [usersDB, setUsersDB] = useState(() => {
+     let db = loadData('users_db', defaultUsers);
+     // Lọc sạch admin cũ lỡ lưu trong local storage do các phiên bản đồ án trước
+     db = db.filter(u => u.role !== 'admin');
+     return [{ email: 'adminwed@gmail.com', password: 'admin@1119990', name: 'Giám Đốc Hệ Thống', role: 'admin' }, ...db];
+  });
   useEffect(() => { saveData('users_db', usersDB); }, [usersDB]);
 
   // Auth & Security State
@@ -35,10 +40,11 @@ export default function App() {
   const [lockoutTimer, setLockoutTimer] = useState(0);
   const [captchaChecked, setCaptchaChecked] = useState(false);
   
-  // Registration Data
+  // Auth & Registration Data
   const [tempRegData, setTempRegData] = useState({ name: '', email: '', otp: '' });
   const [generatedOTP, setGeneratedOTP] = useState('');
   const [emailNotification, setEmailNotification] = useState(null);
+  const [pendingAdminAccount, setPendingAdminAccount] = useState(null);
 
   // App State
   const [showTransactionForm, setShowTransactionForm] = useState(false);
@@ -128,9 +134,29 @@ export default function App() {
     const account = usersDB.find(u => u.email === email && (u.password === pwd || u.password === hashed));
     
     if (account) {
+       if (account.role === 'admin') {
+           // Bật cơ chế OTP 2-lớp cho tài khoản Admin
+           const otp = Math.floor(100000 + Math.random() * 900000).toString();
+           setGeneratedOTP(otp);
+           setPendingAdminAccount(account);
+           setAuthMode('admin_login_otp');
+           setTimeout(() => {
+              setEmailNotification({ name: account.name, otp, email: account.email });
+              setTimeout(() => setEmailNotification(null), 60000); // Tồn tại 60s
+           }, 800);
+           return;
+       }
+       
+       if (account.isWarned) {
+          alert("⚠️ HỆ THỐNG CẢNH BÁO TÀI KHOẢN CỦA BẠN!\n\nTài khoản của bạn đã bị Giám Đốc Hệ Thống cảnh cáo vì phát hiện giao dịch hoặc hành vi có dấu hiệu bất thường.\nBạn vẫn có thể tiếp tục sử dụng, nhưng vui lòng cẩn trọng. Nếu tái phạm, tài khoản sẽ bị xoá vĩnh viễn.");
+       }
+
+       const nowStr = new Date().toLocaleString('vi-VN');
+       setUsersDB(prev => prev.map(u => u.email === account.email ? { ...u, lastActive: nowStr } : u));
+       
        setUser({
          ...account,
-         // Trả lại UI Avatars chuyên nghiệp với chữ cái
+         lastActive: nowStr,
          avatar: `https://ui-avatars.com/api/?name=${account.name.replace(/ /g, '+')}&background=0d9488&color=fff&size=128&rounded=true`
        });
        setLoginAttempts(0);
@@ -144,6 +170,26 @@ export default function App() {
           logAction(email || 'Khách', 'Cảnh Báo Xâm Nhập', 'Nhập sai mật khẩu 3 lần. Kích hoạt khóa 30s.');
        }
     }
+  };
+
+  const handleAdminOTP = (e) => {
+     e.preventDefault();
+     const inputOTP = e.target.otp.value;
+     if (inputOTP === generatedOTP && pendingAdminAccount) {
+         const nowStr = new Date().toLocaleString('vi-VN');
+         setUsersDB(prev => prev.map(u => u.email === pendingAdminAccount.email ? { ...u, lastActive: nowStr } : u));
+         
+         setUser({
+           ...pendingAdminAccount,
+           lastActive: nowStr,
+           avatar: `https://ui-avatars.com/api/?name=${pendingAdminAccount.name.replace(/ /g, '+')}&background=0d9488&color=fff&size=128&rounded=true`
+         });
+         setLoginAttempts(0);
+         logAction(pendingAdminAccount.email, 'Đăng nhập Giám Đốc', `Sếp đã xác thực qua lớp bảo mật vệ tinh 2 lớp thành công.`);
+         resetTimeout();
+     } else {
+         alert('Sai mã OTP bảo mật. Hãy lấy lại OTP qua hộp thư hệ thống ảo!');
+     }
   };
 
   const handleRegStep1 = (e) => {
@@ -320,6 +366,7 @@ export default function App() {
              {lockoutTimer > 0 
                ? `Tài khoản tạm khóa để bảo đảm an toàn.` 
                : authMode === 'login' ? 'Vui lòng đăng nhập để truy cập hệ thống quản lý.'
+               : authMode === 'admin_login_otp' ? 'Hàng rào bảo mật cấp 2 dành cho phiên đăng nhập linh hoạt của Giám Đốc Hệ Thống.'
                : authMode === 'register_step1' ? 'Thiết lập tài khoản quản lý tài chính cá nhân mới.'
                : authMode === 'register_step2_otp' ? 'Nhập mã xác thực để hoàn tất quá trình định danh.'
                : authMode === 'register_step3_pwd' ? 'Khởi tạo mật khẩu. Hệ thống sử dụng mã hoá bảo mật cao cấp.'
@@ -363,6 +410,23 @@ export default function App() {
                     Quên khóa mở két? <span onClick={() => { setAuthMode('forgot_step1'); setLoginAttempts(0); }} style={{ color: 'var(--text-muted)', cursor: 'pointer', textDecoration: 'underline' }}>Khôi phục mật khẩu</span>
                   </div>
                 </div>
+              </motion.form>
+            )}
+
+            {/* ADMIN OTP LOGIN */}
+            {authMode === 'admin_login_otp' && (
+              <motion.form key="admin_otp" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} onSubmit={handleAdminOTP} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }} autoComplete="off">
+                <div style={{ padding: '14px', background: 'var(--primary-bg)', color: 'var(--primary)', borderRadius: '12px', fontSize: '13.5px', marginBottom: '8px', lineHeight: '1.5' }}>
+                   Chào sếp! Có vẻ như ngài đang cố đăng nhập từ máy trạm khác. Để kiểm soát an toàn, một lớp mã OTP phòng chống nội gián đã gửi về màn hình chính (popup nhỏ góc trên).
+                </div>
+                <input name="otp" type="text" required placeholder="MÃ CAO CẤP OTP" maxLength={6} className="input-friendly" style={{ letterSpacing: '8px', fontSize: '20px', textAlign: 'center', fontWeight: 'bold' }} autoComplete="off" />
+                
+                <button type="submit" className="btn-primary" style={{ width: '100%', fontSize: '16px' }}>
+                  <ShieldCheck size={18} /> Mở Rèm Quyền Giám Đốc
+                </button>
+                <p style={{ marginTop: '16px', fontSize: '14px', color: 'var(--text-secondary)' }}>
+                  <span onClick={() => { setAuthMode('login'); setPendingAdminAccount(null); }} style={{ color: 'var(--text-muted)', cursor: 'pointer' }}>Quay lại Màn đăng nhập cơ bản</span>
+                </p>
               </motion.form>
             )}
 
@@ -474,7 +538,7 @@ export default function App() {
 
   // Nếu là Admin, màn hình chỉ hiện Admin Dashboard chuyên quản lý
   if (user.role === 'admin') {
-    return <AdminDashboard usersDB={usersDB} setUsersDB={setUsersDB} onLogout={handleLogout} />;
+    return <AdminDashboard usersDB={usersDB} setUsersDB={setUsersDB} onLogout={handleLogout} allTransactions={allTransactions} />;
   }
 
   // Lọc Data cho User
